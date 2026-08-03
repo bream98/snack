@@ -1,2 +1,2 @@
-# slux
+# snack
 messenger application like slack
