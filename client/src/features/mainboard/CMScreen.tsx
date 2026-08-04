@@ -4,8 +4,9 @@ import styled from 'styled-components';
 import { useChatStore } from '../../store/useChatStore';
 import { MessageItem } from '../chat/MessageItem';
 import { ChatInput } from '../../components/common/ChatInput';
-import { Heading, Button } from '../../design-system';
-import { ChannelMembersPopover } from '../../components/layout/ChannelMembersPopover';
+import { Heading } from '../../design-system';
+import { ChannelMenu } from '../../components/layout/ChannelMenu';
+import { ChannelMembersModal } from '../../components/layout/ChannelMembersModal';
 
 const FlexibleLayout = styled.div`
   display: flex;
@@ -31,13 +32,49 @@ const HeaderBar = styled.div`
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
+const ChannelTitleBtn = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: none;
+  border: none;
+  padding: 2px 6px;
+  border-radius: ${({ theme }) => theme.radii.sm};
+  cursor: pointer;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.primary}12;
+  }
+`;
+
 const MessageList = styled.div`
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding-right: 0.25rem;
+  padding: 0.75rem;
+  border-radius: ${({ theme }) => theme.radii.md};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+
+  /* Clear, distinct Telegram pattern background with pastel gradient mesh */
+  background: ${({ theme }) =>
+    theme.mode === 'dark'
+      ? '#0f172a'
+      : 'linear-gradient(135deg, #e0e7ff 0%, #f0fdf4 100%)'};
+
+  background-image: ${({ theme }) =>
+    theme.mode === 'dark'
+      ? `radial-gradient(${theme.colors.primary}15 1.5px, transparent 1.5px)`
+      : `radial-gradient(${theme.colors.primary}22 1.5px, transparent 1.5px), url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%234f46e5' fill-opacity='0.09' fill-rule='evenodd'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E"), linear-gradient(135deg, #e0e7ff 0%, #e0f2fe 50%, #f0fdf4 100%)`};
+  background-size:
+    24px 24px,
+    60px 60px,
+    100% 100%;
+  background-position:
+    0 0,
+    0 0,
+    0 0;
 `;
 
 export function CMScreen() {
@@ -56,11 +93,12 @@ export function CMScreen() {
   } = useChatStore();
 
   const [text, setText] = useState('');
-  const [showMemberPopover, setShowMemberPopover] = useState(false);
-  const [popoverPos, setPopoverPos] = useState({ top: 110, left: 300 });
+  const [showMenu, setShowMenu] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 110, left: 248 });
+  const [showMembersModal, setShowMembersModal] = useState(false);
+  const [channelMemberList, setChannelMemberList] = useState([currentUser, ...members]);
 
   const channelMessages = messages[channelId] || [];
-  const allChannelMembers = [currentUser, ...members];
 
   const handleSendMain = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,10 +107,19 @@ export function CMScreen() {
     setText('');
   };
 
-  const handleOpenMembers = (e: React.MouseEvent<HTMLElement>) => {
+  const handleChannelTitleClick = (e: React.MouseEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    setPopoverPos({ top: rect.bottom + 6, left: Math.max(10, rect.right - 320) });
-    setShowMemberPopover((prev) => !prev);
+    setMenuPos({ top: rect.bottom + 4, left: rect.left });
+    setShowMenu((prev) => !prev);
+  };
+
+  const handleRemoveMember = (memberId: string) => {
+    setChannelMemberList((prev) => prev.filter((m) => m.id !== memberId));
+  };
+
+  const handleLeaveChannel = () => {
+    alert(`You have left channel #${channelId}`);
+    navigate('/app/cm/general');
   };
 
   const activeBranchMessageId =
@@ -83,31 +130,40 @@ export function CMScreen() {
       {/* 📌 MAIN CHAT AREA */}
       <MainArea>
         <HeaderBar>
-          <Heading size="lg" weight="bold">
-            #{channelId}
-          </Heading>
-
-          {/* 👥 CM CHANNEL MEMBERS TRIGGER */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleOpenMembers}
-            style={{ fontSize: '12px', padding: '4px 10px' }}
-          >
-            👥 Members ({allChannelMembers.length})
-          </Button>
+          {/* Clickable Channel Title opening ChannelMenu */}
+          <ChannelTitleBtn onClick={handleChannelTitleClick}>
+            <Heading size="lg" weight="bold">
+              #{channelId}
+            </Heading>
+            <span style={{ fontSize: '11px', color: '#64748b' }}>▼</span>
+          </ChannelTitleBtn>
         </HeaderBar>
 
-        {/* 👥 CHANNEL MEMBERS POPOVER */}
-        {showMemberPopover && (
-          <ChannelMembersPopover
-            members={allChannelMembers}
-            position={popoverPos}
-            onClose={() => setShowMemberPopover(false)}
-            onSendDM={(userId) => navigate(`/app/dm/${userId}`)}
+        {/* 📋 CHANNEL DROPDOWN MENU WITH METADATA */}
+        {showMenu && (
+          <ChannelMenu
+            channelName={channelId}
+            createdTime="Oct 15, 2025"
+            createdBy="Nam Luong"
+            memberCount={channelMemberList.length}
+            position={menuPos}
+            onClose={() => setShowMenu(false)}
+            onOpenMembersModal={() => setShowMembersModal(true)}
+            onLeaveChannel={handleLeaveChannel}
           />
         )}
 
+        {/* 👥 CHANNEL MEMBERS MODAL */}
+        {showMembersModal && (
+          <ChannelMembersModal
+            channelName={channelId}
+            members={channelMemberList}
+            onClose={() => setShowMembersModal(false)}
+            onRemoveMember={handleRemoveMember}
+          />
+        )}
+
+        {/* Distinct Telegram Pattern Background Message Feed */}
         <MessageList>
           {channelMessages.map((msg) => (
             <MessageItem

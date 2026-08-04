@@ -17,14 +17,17 @@ const MessageRow = styled.div<MessageRowProps>`
   position: relative;
   display: flex;
   gap: 0.75rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.625rem 0.875rem;
   border-radius: ${({ theme }) => theme.radii.md};
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-  border: 1px solid transparent;
+  /* Solid high-contrast surface backdrop ensuring 100% crisp readability over any background */
+  background-color: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.surface};
-    border-color: ${({ theme }) => theme.colors.border};
+    border-color: ${({ theme }) => theme.colors.primary};
+    background-color: ${({ theme }) => `${theme.colors.primary}08`};
   }
 
   /* Floating toolbar trigger */
@@ -36,21 +39,21 @@ const MessageRow = styled.div<MessageRowProps>`
   ${({ $isBranchActive, theme }) =>
     $isBranchActive &&
     css`
-      background-color: ${theme.colors.primary}12;
-      border-color: ${theme.colors.primary}40;
+      background-color: ${theme.colors.primary}18 !important;
+      border-color: ${theme.colors.primary} !important;
     `}
 
   ${({ $isUnread, theme }) =>
     $isUnread &&
     css`
-      border-left: 3px solid ${theme.colors.primary};
-      background-color: ${theme.colors.primary}08;
+      border-left: 3.5px solid ${theme.colors.primary};
+      background-color: ${theme.colors.primary}0d;
     `}
 
   ${({ $isRecalled }) =>
     $isRecalled &&
     css`
-      opacity: 0.6;
+      opacity: 0.65;
     `}
 `;
 
@@ -87,12 +90,13 @@ const SenderName = styled(Text)`
   cursor: pointer;
   &:hover {
     text-decoration: underline;
+    color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
 const ContentArea = styled.div`
   font-size: 0.9375rem;
-  line-height: 1.45;
+  line-height: 1.48;
   color: ${({ theme }) => theme.colors.text};
   word-break: break-word;
 `;
@@ -146,6 +150,7 @@ const ReactionPill = styled.button`
 
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary};
+    background-color: ${({ theme }) => theme.colors.primary}10;
   }
 `;
 

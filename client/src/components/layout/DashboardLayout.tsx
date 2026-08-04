@@ -10,17 +10,30 @@ import { useChatStore } from '../../store/useChatStore';
 const DashboardGrid = styled.div<{ $isSidebarOpen: boolean; $hasSubContent: boolean; $branchWidth: number }>`
   display: grid;
   grid-template-rows: 52px 1fr;
-  grid-template-columns: ${({ $hasSubContent, $branchWidth }) =>
-    $hasSubContent ? `240px 1fr ${$branchWidth}px` : '240px 1fr'};
-  grid-template-areas: ${({ $hasSubContent }) =>
-    $hasSubContent
+  grid-template-columns: ${({ $isSidebarOpen, $hasSubContent, $branchWidth }) => {
+    if (!$isSidebarOpen) {
+      return $hasSubContent ? `0px 1fr ${$branchWidth}px` : '0px 1fr';
+    }
+    return $hasSubContent ? `240px 1fr ${$branchWidth}px` : '240px 1fr';
+  }};
+  grid-template-areas: ${({ $isSidebarOpen, $hasSubContent }) => {
+    if (!$isSidebarOpen) {
+      return $hasSubContent
+        ? `'topbar topbar topbar' '. mainboard subcontent'`
+        : `'topbar topbar' '. mainboard'`;
+    }
+    return $hasSubContent
       ? `'topbar topbar topbar' 'sidebar mainboard subcontent'`
-      : `'topbar topbar' 'sidebar mainboard'`};
-  gap: 0.375rem;
+      : `'topbar topbar' 'sidebar mainboard'`;
+  }};
+  gap: ${({ $isSidebarOpen }) => ($isSidebarOpen ? '0.375rem' : '0rem 0.375rem')};
   width: 100vw;
   height: 100vh;
   padding: 0.375rem;
-  background-color: ${({ theme }) => theme.colors.background};
+  background: ${({ theme }) =>
+    theme.mode === 'dark'
+      ? theme.colors.background
+      : 'linear-gradient(135deg, #cbd5e1 0%, #e2e8f0 40%, #e0e7ff 100%)'};
   box-sizing: border-box;
   overflow: hidden;
 
@@ -49,10 +62,7 @@ const SidebarArea = styled.div<{ $isSidebarOpen: boolean }>`
   grid-area: sidebar;
   height: 100%;
   overflow: hidden;
-
-  @media (max-width: 768px) {
-    display: ${({ $isSidebarOpen }) => ($isSidebarOpen ? 'block' : 'none')};
-  }
+  display: ${({ $isSidebarOpen }) => ($isSidebarOpen ? 'block' : 'none')};
 `;
 
 const MainboardArea = styled.div<{ $isSidebarOpen: boolean }>`
@@ -125,7 +135,7 @@ export function DashboardLayout() {
         <MainboardRouter />
       </MainboardArea>
 
-      {/* 📌 SUBCONTENT AREA (Mutually exclusive: renders EITHER BranchPanel OR UserProfileSection) */}
+      {/* 📌 SUBCONTENT AREA */}
       {hasSubContent && (
         <SubContentArea>
           {activeSubContent?.type === 'branch' && activeBranchParentMsg && (

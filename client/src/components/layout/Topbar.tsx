@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Card, Text, Button } from '../../design-system';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useChatStore } from '../../store/useChatStore';
+import { useNavigationStore } from '../../store/useNavigationStore';
 
 const TopbarContainer = styled(Card)`
   width: 100%;
@@ -10,8 +11,34 @@ const TopbarContainer = styled(Card)`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1rem;
+  padding: 0 0.875rem;
   box-sizing: border-box;
+`;
+
+const LeftHeaderGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const SidebarToggleBtn = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: ${({ theme }) => theme.radii.sm};
+  background-color: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  color: ${({ theme }) => theme.colors.text};
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.primary}15;
+    color: ${({ theme }) => theme.colors.primary};
+  }
 `;
 
 const Brand = styled.div`
@@ -54,6 +81,7 @@ export function Topbar() {
   const navigate = useNavigate();
   const { logout } = useAuthStore();
   const { currentUser } = useChatStore();
+  const { toggleSidebar } = useNavigationStore();
 
   const handleLogout = () => {
     logout();
@@ -62,11 +90,18 @@ export function Topbar() {
 
   return (
     <TopbarContainer glass>
-      {/* Brand Logo */}
-      <Brand onClick={() => navigate('/app/cm/general')}>
-        <span>🍿</span>
-        <span>Snack</span>
-      </Brand>
+      <LeftHeaderGroup>
+        {/* Sidebar Toggle Hamburger Button */}
+        <SidebarToggleBtn onClick={toggleSidebar} title="Toggle Sidebar (Đóng/Mở thanh bên)">
+          ☰
+        </SidebarToggleBtn>
+
+        {/* Brand Logo */}
+        <Brand onClick={() => navigate('/app/cm/general')}>
+          <span>🍿</span>
+          <span>Snack</span>
+        </Brand>
+      </LeftHeaderGroup>
 
       {/* User Actions */}
       <UserArea>
