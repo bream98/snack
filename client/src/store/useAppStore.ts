@@ -1,0 +1,15 @@
+import { create } from 'zustand';
+
+interface AppState {
+  themeMode: 'light' | 'dark';
+  toggleTheme: () => void;
+  isLoading: boolean;
+  setLoading: (loading: boolean) => void;
+}
+
+export const useAppStore = create<AppState>((set) => ({
+  themeMode: 'light',
+  toggleTheme: () => set((state) => ({ themeMode: state.themeMode === 'light' ? 'dark' : 'light' })),
+  isLoading: false,
+  setLoading: (loading) => set({ isLoading: loading }),
+}));
