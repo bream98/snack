@@ -7,6 +7,7 @@ import { GlobalStyle } from './styles/GlobalStyle';
 import { AuthLayout } from './layouts/AuthLayout';
 import { LoginPage } from './features/auth/LoginPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
+import {Test} from "./features/test/Test.tsx";
 
 export function App() {
   const { isAuthenticated } = useAuthStore();
@@ -40,6 +41,11 @@ export function App() {
             )
           }
         />
+
+          <Route
+              path="/test"
+              element={<Test />}
+              />
 
         <Route
           path="*"

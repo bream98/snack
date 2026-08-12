@@ -1,12 +1,13 @@
 import { useState, useRef } from 'react';
 import styled from 'styled-components';
-import { Card, Text, Heading, Button } from '../../design-system';
+import { Text, Heading, Button } from '../../design-system';
 import type { Message } from '../../store/useChatStore';
 import { useChatStore } from '../../store/useChatStore';
 import { MessageItem } from './MessageItem';
 import { ChatInput } from '../../components/common/ChatInput';
 
-const BranchTile = styled(Card)`
+/* Color-Defined Borderless Branch Panel */
+const BranchPanelContainer = styled.aside`
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -15,6 +16,10 @@ const BranchTile = styled(Card)`
   box-sizing: border-box;
   overflow: hidden;
   position: relative;
+  border-radius: 0;
+  border: none;
+  background-color: ${({ theme }) =>
+    theme.mode === 'dark' ? theme.colors.surface : theme.colors.background};
 `;
 
 const ResizeHandle = styled.div`
@@ -89,7 +94,7 @@ export function BranchPanel({
   };
 
   return (
-    <BranchTile glass>
+    <BranchPanelContainer>
       {/* Drag Resize Handle */}
       <ResizeHandle onMouseDown={handleMouseDown} title="Drag to resize Branch" />
 
@@ -136,6 +141,6 @@ export function BranchPanel({
         onSubmit={handleSubmit}
         buttonText="Send"
       />
-    </BranchTile>
+    </BranchPanelContainer>
   );
 }

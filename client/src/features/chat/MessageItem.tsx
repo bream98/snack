@@ -13,21 +13,20 @@ interface MessageRowProps {
   $isUnread?: boolean;
 }
 
+/* Borderless Color-Defined Message Card (Consistent 8px radius, no border) */
 const MessageRow = styled.div<MessageRowProps>`
   position: relative;
   display: flex;
   gap: 0.75rem;
   padding: 0.625rem 0.875rem;
   border-radius: ${({ theme }) => theme.radii.md};
-  /* Solid high-contrast surface backdrop ensuring 100% crisp readability over any background */
   background-color: ${({ theme }) => theme.colors.surface};
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  border: none;
   box-sizing: border-box;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition: ${({ theme }) => theme.transitions.fast};
 
   &:hover {
-    border-color: ${({ theme }) => theme.colors.primary};
-    background-color: ${({ theme }) => `${theme.colors.primary}08`};
+    background-color: ${({ theme }) => `${theme.colors.primary}12`};
   }
 
   /* Floating toolbar trigger */
@@ -39,15 +38,14 @@ const MessageRow = styled.div<MessageRowProps>`
   ${({ $isBranchActive, theme }) =>
     $isBranchActive &&
     css`
-      background-color: ${theme.colors.primary}18 !important;
-      border-color: ${theme.colors.primary} !important;
+      background-color: ${theme.colors.primary}20 !important;
     `}
 
   ${({ $isUnread, theme }) =>
     $isUnread &&
     css`
-      border-left: 3.5px solid ${theme.colors.primary};
-      background-color: ${theme.colors.primary}0d;
+      border-left: 4px solid ${theme.colors.primary};
+      background-color: ${theme.colors.primary}12;
     `}
 
   ${({ $isRecalled }) =>
@@ -58,8 +56,8 @@ const MessageRow = styled.div<MessageRowProps>`
 `;
 
 const Avatar = styled.div`
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background-color: ${({ theme }) => theme.colors.primary};
   color: #ffffff;
@@ -67,7 +65,7 @@ const Avatar = styled.div`
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   flex-shrink: 0;
   cursor: pointer;
 `;
@@ -88,6 +86,7 @@ const HeaderRow = styled.div`
 
 const SenderName = styled(Text)`
   cursor: pointer;
+  color: ${({ theme }) => theme.colors.text};
   &:hover {
     text-decoration: underline;
     color: ${({ theme }) => theme.colors.primary};
@@ -96,7 +95,7 @@ const SenderName = styled(Text)`
 
 const ContentArea = styled.div`
   font-size: 0.9375rem;
-  line-height: 1.48;
+  line-height: 1.5;
   color: ${({ theme }) => theme.colors.text};
   word-break: break-word;
 `;
@@ -107,27 +106,28 @@ const RecalledText = styled.span`
   font-size: 0.875rem;
 `;
 
+/* Borderless Action Bar Toolbar */
 const FloatingToolbar = styled.div`
   position: absolute;
-  top: -12px;
-  right: 12px;
+  top: -14px;
+  right: 14px;
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   background-color: ${({ theme }) => theme.colors.surface};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.radii.sm};
-  padding: 2px 4px;
+  border: none;
+  border-radius: ${({ theme }) => theme.radii.pill};
+  padding: 3px 6px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.15s ease;
+  transition: ${({ theme }) => theme.transitions.fast};
   z-index: 5;
 `;
 
 const ToolbarBtn = styled(Button)`
-  padding: 2px 6px;
+  padding: 3px 8px;
   font-size: 11px;
-  border-radius: 4px;
+  border-radius: ${({ theme }) => theme.radii.pill};
 `;
 
 const ReactionRow = styled.div`
@@ -141,16 +141,15 @@ const ReactionPill = styled.button`
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 2px 8px;
-  border-radius: 12px;
+  padding: 2px 10px;
+  border-radius: ${({ theme }) => theme.radii.pill};
   font-size: 11px;
   background-color: ${({ theme }) => theme.colors.background};
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  border: none;
   cursor: pointer;
 
   &:hover {
-    border-color: ${({ theme }) => theme.colors.primary};
-    background-color: ${({ theme }) => theme.colors.primary}10;
+    background-color: ${({ theme }) => theme.colors.primary}18;
   }
 `;
 
@@ -356,7 +355,7 @@ export function MessageItem({
               variant="ghost"
               onClick={() => onRecallMessage(message.id)}
               title="Recall Message"
-              style={{ color: '#ef4444' }}
+              style={{ color: '#d93025' }}
             >
               ↩️ Recall
             </ToolbarBtn>

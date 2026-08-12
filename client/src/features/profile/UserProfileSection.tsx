@@ -1,11 +1,12 @@
 import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Card, Text, Heading, Button } from '../../design-system';
+import { Text, Heading, Button } from '../../design-system';
 import type { Member } from '../../store/useChatStore';
 import { useChatStore } from '../../store/useChatStore';
 
-const SubContentTile = styled(Card)`
+/* Color-Defined Borderless User Profile Panel */
+const SubContentContainer = styled.aside`
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -14,6 +15,10 @@ const SubContentTile = styled(Card)`
   box-sizing: border-box;
   overflow-y: auto;
   position: relative;
+  border-radius: 0;
+  border: none;
+  background-color: ${({ theme }) =>
+    theme.mode === 'dark' ? theme.colors.surface : theme.colors.background};
 `;
 
 const ResizeHandle = styled.div`
@@ -37,7 +42,9 @@ const HeaderBanner = styled.div`
   align-items: center;
   gap: 1rem;
   padding-bottom: 0.875rem;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+  background-color: ${({ theme }) => theme.colors.surface};
+  padding: 0.875rem;
+  border-radius: ${({ theme }) => theme.radii.lg};
 `;
 
 const LargeAvatar = styled.div`
@@ -58,10 +65,10 @@ const StatusBadge = styled.span<{ $isOn: boolean }>`
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 2px 8px;
-  border-radius: 12px;
+  padding: 2px 10px;
+  border-radius: ${({ theme }) => theme.radii.pill};
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   background-color: ${({ $isOn, theme }) =>
     $isOn ? `${theme.colors.success}20` : `${theme.colors.textSecondary}20`};
   color: ${({ $isOn, theme }) =>
@@ -73,9 +80,9 @@ const InfoCard = styled.div`
   flex-direction: column;
   gap: 0.375rem;
   padding: 0.75rem;
-  border-radius: ${({ theme }) => theme.radii.sm};
-  background-color: ${({ theme }) => theme.colors.background};
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radii.lg};
+  background-color: ${({ theme }) => theme.colors.surface};
+  border: none;
 `;
 
 export interface UserProfileSectionProps {
@@ -114,7 +121,7 @@ export function UserProfileSection({ user, onClose }: UserProfileSectionProps) {
   };
 
   return (
-    <SubContentTile glass>
+    <SubContentContainer>
       {/* Drag Resize Handle */}
       <ResizeHandle onMouseDown={handleMouseDown} title="Drag to resize" />
 
@@ -172,7 +179,7 @@ export function UserProfileSection({ user, onClose }: UserProfileSectionProps) {
         </Text>
         <Text size="sm" weight="bold">
           {user.status === 'on' ? '🟢 Online (Active)' : '⚪ Offline'}{' '}
-          <span style={{ fontSize: '11px', color: '#64748b' }}>
+          <span style={{ fontSize: '11px', color: '#5f6368' }}>
             {user.last_online_time && `(${user.last_online_time})`}
           </span>
         </Text>
@@ -182,6 +189,6 @@ export function UserProfileSection({ user, onClose }: UserProfileSectionProps) {
       <Button variant="primary" onClick={handleSendDM} style={{ marginTop: 'auto' }}>
         💬 Direct Message
       </Button>
-    </SubContentTile>
+    </SubContentContainer>
   );
 }

@@ -1,18 +1,22 @@
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Card, Text, Button } from '../../design-system';
+import { Text, Button } from '../../design-system';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useChatStore } from '../../store/useChatStore';
 import { useNavigationStore } from '../../store/useNavigationStore';
 
-const TopbarContainer = styled(Card)`
+/* Color-Defined Borderless Topbar Header */
+const TopbarContainer = styled.header`
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0.875rem;
+  padding: 0 1rem;
   box-sizing: border-box;
+  background-color: ${({ theme }) => theme.colors.surface};
+  border-radius: 0;
+  border: none;
 `;
 
 const LeftHeaderGroup = styled.div`
@@ -25,19 +29,19 @@ const SidebarToggleBtn = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: ${({ theme }) => theme.radii.sm};
-  background-color: ${({ theme }) => theme.colors.background};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  color: ${({ theme }) => theme.colors.text};
-  font-size: 1.1rem;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: transparent;
+  border: none;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  font-size: 1.15rem;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: ${({ theme }) => theme.transitions.fast};
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.primary}15;
-    color: ${({ theme }) => theme.colors.primary};
+    background-color: ${({ theme }) => theme.colors.textSecondary}15;
+    color: ${({ theme }) => theme.colors.text};
   }
 `;
 
@@ -45,8 +49,8 @@ const Brand = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-weight: 800;
-  font-size: 1.125rem;
+  font-weight: 700;
+  font-size: 1.15rem;
   color: ${({ theme }) => theme.colors.primary};
   cursor: pointer;
 `;
@@ -61,14 +65,21 @@ const UserBadge = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding: 3px 8px;
+  border-radius: ${({ theme }) => theme.radii.pill};
   cursor: pointer;
+  transition: ${({ theme }) => theme.transitions.fast};
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.textSecondary}12;
+  }
 `;
 
 const AvatarCircle = styled.div`
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background-color: #6366f1;
+  background-color: ${({ theme }) => theme.colors.primary};
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -89,10 +100,10 @@ export function Topbar() {
   };
 
   return (
-    <TopbarContainer glass>
+    <TopbarContainer>
       <LeftHeaderGroup>
-        {/* Sidebar Toggle Hamburger Button */}
-        <SidebarToggleBtn onClick={toggleSidebar} title="Toggle Sidebar (Đóng/Mở thanh bên)">
+        {/* Sidebar Toggle Button */}
+        <SidebarToggleBtn onClick={toggleSidebar} title="Toggle Sidebar">
           ☰
         </SidebarToggleBtn>
 
@@ -116,7 +127,7 @@ export function Topbar() {
           variant="outline"
           size="sm"
           onClick={handleLogout}
-          style={{ fontSize: '12px', padding: '2px 8px' }}
+          style={{ fontSize: '12px', padding: '3px 10px', border: 'none', backgroundColor: '#f1f3f4' }}
         >
           Logout
         </Button>

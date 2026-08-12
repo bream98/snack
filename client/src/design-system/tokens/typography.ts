@@ -1,8 +1,8 @@
 export const typography = {
   fontFamily: {
-    primary: "'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    heading: "'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif",
-    mono: "'Fira Code', monospace",
+    primary: "'Google Sans', 'Roboto', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+    heading: "'Google Sans', 'Roboto', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+    code: "'Roboto Mono', monospace",
   },
   fontSize: {
     xs: '0.75rem',    // 12px
@@ -22,16 +22,13 @@ export const typography = {
     extrabold: 800,
   },
   lineHeight: {
-    none: 1,
     tight: 1.25,
-    snug: 1.375,
     normal: 1.5,
-    relaxed: 1.625,
+    relaxed: 1.75,
   },
   letterSpacing: {
-    tight: '-0.025em',
-    normal: '0em',
-    wide: '0.025em',
-    wider: '0.05em',
+    tight: '-0.015em',
+    normal: '0',
+    wide: '0.015em',
   },
 };

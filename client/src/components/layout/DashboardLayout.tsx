@@ -7,9 +7,10 @@ import { UserProfileSection } from '../../features/profile/UserProfileSection';
 import { useNavigationStore } from '../../store/useNavigationStore';
 import { useChatStore } from '../../store/useChatStore';
 
+/* Color-Defined Borderless Layout (Zero borders, boundaries defined by color tone contrast) */
 const DashboardGrid = styled.div<{ $isSidebarOpen: boolean; $hasSubContent: boolean; $branchWidth: number }>`
   display: grid;
-  grid-template-rows: 52px 1fr;
+  grid-template-rows: 56px 1fr;
   grid-template-columns: ${({ $isSidebarOpen, $hasSubContent, $branchWidth }) => {
     if (!$isSidebarOpen) {
       return $hasSubContent ? `0px 1fr ${$branchWidth}px` : '0px 1fr';
@@ -26,14 +27,12 @@ const DashboardGrid = styled.div<{ $isSidebarOpen: boolean; $hasSubContent: bool
       ? `'topbar topbar topbar' 'sidebar mainboard subcontent'`
       : `'topbar topbar' 'sidebar mainboard'`;
   }};
-  gap: ${({ $isSidebarOpen }) => ($isSidebarOpen ? '0.375rem' : '0rem 0.375rem')};
+  gap: 0;
   width: 100vw;
   height: 100vh;
-  padding: 0.375rem;
-  background: ${({ theme }) =>
-    theme.mode === 'dark'
-      ? theme.colors.background
-      : 'linear-gradient(135deg, #cbd5e1 0%, #e2e8f0 40%, #e0e7ff 100%)'};
+  min-height: 480px;
+  padding: 0;
+  background-color: ${({ theme }) => theme.colors.background};
   box-sizing: border-box;
   overflow: hidden;
 
@@ -55,20 +54,30 @@ const DashboardGrid = styled.div<{ $isSidebarOpen: boolean; $hasSubContent: bool
 
 const TopbarArea = styled.div`
   grid-area: topbar;
-  height: 52px;
+  height: 56px;
+  min-height: 56px;
+  background-color: ${({ theme }) => theme.colors.surface};
+  border-radius: 0;
 `;
 
 const SidebarArea = styled.div<{ $isSidebarOpen: boolean }>`
   grid-area: sidebar;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
   display: ${({ $isSidebarOpen }) => ($isSidebarOpen ? 'block' : 'none')};
+  background-color: ${({ theme }) =>
+    theme.mode === 'dark' ? theme.colors.surface : theme.colors.background};
+  border-radius: 0;
 `;
 
 const MainboardArea = styled.div<{ $isSidebarOpen: boolean }>`
   grid-area: mainboard;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
+  background-color: ${({ theme }) => theme.colors.surface};
+  border-radius: 0;
 
   @media (max-width: 768px) {
     display: ${({ $isSidebarOpen }) => ($isSidebarOpen ? 'none' : 'block')};
@@ -78,7 +87,11 @@ const MainboardArea = styled.div<{ $isSidebarOpen: boolean }>`
 const SubContentArea = styled.div`
   grid-area: subcontent;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
+  background-color: ${({ theme }) =>
+    theme.mode === 'dark' ? theme.colors.surface : theme.colors.background};
+  border-radius: 0;
 
   @media (max-width: 1024px) {
     display: none;

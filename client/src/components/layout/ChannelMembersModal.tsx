@@ -10,13 +10,14 @@ const ModalBackdrop = styled.div`
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(32, 33, 36, 0.4);
   z-index: 99998;
   display: flex;
   align-items: center;
   justify-content: center;
 `;
 
+/* Google Material 3 Dialog (16px radius, flat background) */
 const ModalCard = styled(Card)`
   width: 440px;
   max-width: calc(100vw - 2rem);
@@ -28,6 +29,7 @@ const ModalCard = styled(Card)`
   flex-direction: column;
   gap: 0.875rem;
   box-sizing: border-box;
+  border-radius: ${({ theme }) => theme.radii.xl};
 `;
 
 const FilterTabs = styled.div`
@@ -38,17 +40,19 @@ const FilterTabs = styled.div`
 `;
 
 const TabButton = styled.button<{ $isActive?: boolean }>`
-  padding: 3px 10px;
-  border-radius: 12px;
+  padding: 4px 12px;
+  border-radius: ${({ theme }) => theme.radii.pill};
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   border: 1px solid ${({ $isActive, theme }) => ($isActive ? theme.colors.primary : 'transparent')};
-  background-color: ${({ $isActive, theme }) => ($isActive ? `${theme.colors.primary}15` : 'transparent')};
+  background-color: ${({ $isActive, theme }) => ($isActive ? `${theme.colors.primary}18` : 'transparent')};
   color: ${({ $isActive, theme }) => ($isActive ? theme.colors.primary : theme.colors.textSecondary)};
   cursor: pointer;
+  transition: ${({ theme }) => theme.transitions.fast};
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
+    background-color: ${({ theme }) => `${theme.colors.primary}12`};
   }
 `;
 
@@ -66,10 +70,10 @@ const MemberRow = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 0.75rem;
-  border-radius: ${({ theme }) => theme.radii.sm};
+  border-radius: ${({ theme }) => theme.radii.md};
   background-color: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
-  transition: border-color 0.15s ease;
+  transition: ${({ theme }) => theme.transitions.fast};
 
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary};
@@ -171,7 +175,7 @@ export function ChannelMembersModal({
           </TabButton>
         </FilterTabs>
 
-        {/* Member List Feed with Remove button (NO DM button) */}
+        {/* Member List Feed */}
         <MemberListFeed>
           {filtered.map((m) => (
             <MemberRow key={m.id}>
@@ -187,7 +191,7 @@ export function ChannelMembersModal({
                   <Text size="xs" colorVariant="secondary" style={{ fontSize: '11px' }}>
                     @{m.account_name}
                     {m.status === 'off' && m.last_online_time && (
-                      <span style={{ color: '#94a3b8', marginLeft: '4px' }}>
+                      <span style={{ color: '#70757a', marginLeft: '4px' }}>
                         • Active {m.last_online_time}
                       </span>
                     )}
@@ -195,12 +199,12 @@ export function ChannelMembersModal({
                 </div>
               </div>
 
-              {/* Remove button replaces DM button as requested */}
+              {/* Remove button */}
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onRemoveMember(m.id)}
-                style={{ fontSize: '11px', padding: '2px 8px', color: '#ef4444', borderColor: '#fca5a5' }}
+                style={{ fontSize: '11px', padding: '2px 10px', color: '#d93025', borderColor: '#fce8e6' }}
               >
                 🚫 Remove
               </Button>

@@ -12,6 +12,7 @@ const MenuCard = styled(Card)`
   flex-direction: column;
   gap: 0.5rem;
   border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radii.lg};
 `;
 
 const InfoBox = styled.div`
@@ -37,14 +38,15 @@ const MenuItem = styled.button<{ $danger?: boolean }>`
   gap: 0.5rem;
   width: 100%;
   padding: 0.45rem 0.625rem;
-  border-radius: ${({ theme }) => theme.radii.sm};
+  border-radius: ${({ theme }) => theme.radii.pill};
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: ${({ $danger, theme }) => ($danger ? theme.colors.danger : theme.colors.text)};
   text-align: left;
   border: none;
   background: none;
   cursor: pointer;
+  transition: ${({ theme }) => theme.transitions.fast};
 
   &:hover {
     background-color: ${({ $danger, theme }) =>
@@ -122,7 +124,7 @@ export function ChannelMenu({
         <span>Members ({memberCount})</span>
       </MenuItem>
 
-      <div style={{ height: '1px', backgroundColor: '#e2e8f0', margin: '1px 0' }} />
+      <div style={{ height: '1px', backgroundColor: '#dadce0', margin: '1px 0' }} />
 
       <MenuItem
         $danger

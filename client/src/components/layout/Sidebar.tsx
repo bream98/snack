@@ -1,51 +1,60 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
-import { Card, Text, Button } from '../../design-system';
+import { Text, Button } from '../../design-system';
 import { useChatStore } from '../../store/useChatStore';
 import { useNavigationStore } from '../../store/useNavigationStore';
-import { ActivityPopover } from './ActivityPopover';
-import { InvitationPopover } from './InvitationPopover';
+import { ActivityModal } from './ActivityModal';
+import { InvitationModal } from './InvitationModal';
 
-const SidebarContainer = styled(Card)`
+/* Color-Defined Borderless Sidebar Drawer Panel */
+const SidebarContainer = styled.aside`
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  padding: 0.75rem 0.5rem;
   box-sizing: border-box;
   overflow-y: auto;
   position: relative;
+  border-radius: 0;
+  border: none;
+  background-color: ${({ theme }) =>
+    theme.mode === 'dark' ? theme.colors.surface : theme.colors.background};
 `;
 
 const SidebarHeaderMobile = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+  padding: 0 0.5rem 0.5rem 0.5rem;
 `;
 
 const SectionBox = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.15rem;
 `;
 
+/* Consistent Google Pill NavItem */
 const NavItem = styled.div<{ $isActive?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0.75rem;
-  border-radius: ${({ theme }) => theme.radii.sm};
+  padding: 0.5rem 1rem;
+  border-radius: ${({ theme }) => theme.radii.pill};
   cursor: pointer;
+  font-weight: ${({ $isActive }) => ($isActive ? '600' : '400')};
   background-color: ${({ $isActive, theme }) =>
-    $isActive ? theme.colors.primary + '1a' : 'transparent'};
+    $isActive ? `${theme.colors.primary}18` : 'transparent'};
   color: ${({ $isActive, theme }) =>
     $isActive ? theme.colors.primary : theme.colors.text};
+  transition: ${({ theme }) => theme.transitions.fast};
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.primary + '0d'};
+    background-color: ${({ $isActive, theme }) =>
+      $isActive ? `${theme.colors.primary}20` : `${theme.colors.textSecondary}15`};
   }
 `;
 
@@ -54,8 +63,8 @@ const Badge = styled.span`
   color: #ffffff;
   font-size: 0.75rem;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 10px;
+  padding: 2px 8px;
+  border-radius: 100px;
 `;
 
 const StatusDot = styled.span<{ $isOn: boolean }>`
@@ -75,11 +84,6 @@ export function Sidebar() {
   const [isActivityOpen, setIsActivityOpen] = useState(false);
   const [isInvitationOpen, setIsInvitationOpen] = useState(false);
 
-  const [popoverPos, setPopoverPos] = useState({ top: 110, left: 248 });
-
-  const activityItemRef = useRef<HTMLDivElement>(null);
-  const invitationItemRef = useRef<HTMLDivElement>(null);
-
   const handleItemClick = (path: string) => {
     navigate(path);
     if (window.innerWidth <= 768) {
@@ -87,22 +91,18 @@ export function Sidebar() {
     }
   };
 
-  const toggleActivity = (e: React.MouseEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setPopoverPos({ top: rect.top, left: rect.right + 8 });
+  const toggleActivity = () => {
     setIsInvitationOpen(false);
     setIsActivityOpen((prev) => !prev);
   };
 
-  const toggleInvitation = (e: React.MouseEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setPopoverPos({ top: rect.top, left: rect.right + 8 });
+  const toggleInvitation = () => {
     setIsActivityOpen(false);
     setIsInvitationOpen((prev) => !prev);
   };
 
   return (
-    <SidebarContainer glass>
+    <SidebarContainer>
       {/* Mobile Close Button Header */}
       <SidebarHeaderMobile>
         <Text size="xs" weight="bold" colorVariant="primary">
@@ -113,7 +113,7 @@ export function Sidebar() {
           size="sm"
           onClick={toggleSidebar}
           style={{ padding: '2px 6px', fontSize: '13px' }}
-          title="Đóng sidebar"
+          title="Close sidebar"
         >
           ✕
         </Button>
@@ -121,7 +121,7 @@ export function Sidebar() {
 
       {/* 📌 FEATURES */}
       <SectionBox>
-        <Text size="xs" weight="bold" colorVariant="secondary">
+        <Text size="xs" weight="bold" colorVariant="secondary" style={{ paddingLeft: '0.75rem', marginBottom: '0.25rem' }}>
           FEATURES
         </Text>
         <NavItem
@@ -132,7 +132,6 @@ export function Sidebar() {
         </NavItem>
 
         <NavItem
-          ref={activityItemRef}
           $isActive={isActivityOpen}
           onClick={toggleActivity}
         >
@@ -141,12 +140,11 @@ export function Sidebar() {
         </NavItem>
 
         <NavItem
-          ref={invitationItemRef}
           $isActive={isInvitationOpen}
           onClick={toggleInvitation}
         >
           <span>📩 Invitations</span>
-          <Badge style={{ backgroundColor: '#3b82f6' }}>2 new</Badge>
+          <Badge style={{ backgroundColor: '#1a73e8' }}>2 new</Badge>
         </NavItem>
 
         <NavItem
@@ -157,25 +155,23 @@ export function Sidebar() {
         </NavItem>
       </SectionBox>
 
-      {/* ACTIVITY POPOVER */}
+      {/* ACTIVITY MODAL */}
       {isActivityOpen && (
-        <ActivityPopover
-          position={popoverPos}
+        <ActivityModal
           onClose={() => setIsActivityOpen(false)}
         />
       )}
 
-      {/* INVITATION POPOVER */}
+      {/* INVITATION MODAL */}
       {isInvitationOpen && (
-        <InvitationPopover
-          position={popoverPos}
+        <InvitationModal
           onClose={() => setIsInvitationOpen(false)}
         />
       )}
 
       {/* CHANNEL MESSAGE */}
       <SectionBox>
-        <Text size="xs" weight="bold" colorVariant="secondary">
+        <Text size="xs" weight="bold" colorVariant="secondary" style={{ paddingLeft: '0.75rem', marginBottom: '0.25rem' }}>
           Channel Message
         </Text>
         {channels.map((ch) => (
@@ -191,7 +187,7 @@ export function Sidebar() {
 
       {/* DIRECT MESSAGE */}
       <SectionBox>
-        <Text size="xs" weight="bold" colorVariant="secondary">
+        <Text size="xs" weight="bold" colorVariant="secondary" style={{ paddingLeft: '0.75rem', marginBottom: '0.25rem' }}>
           Direct Message
         </Text>
         {members.map((m) => (

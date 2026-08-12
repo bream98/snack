@@ -1,46 +1,46 @@
 export const colors = {
-  // Brand colors
+  // Google Standard Brand Palette
   primary: {
-    50: '#eef2ff',
-    100: '#e0e7ff',
-    200: '#c7d2fe',
-    300: '#a5b4fc',
-    400: '#818cf8',
-    500: '#6366f1',
-    600: '#4f46e5',
-    700: '#4338ca',
-    800: '#3730a3',
-    900: '#312e81',
+    50: '#e8f0fe',
+    100: '#d2e3fc',
+    200: '#a6c5f7',
+    300: '#78a9f7',
+    400: '#4285f4',
+    500: '#1a73e8', // Google Blue
+    600: '#1557b0',
+    700: '#10448e',
+    800: '#0c336b',
+    900: '#072147',
   },
   secondary: {
-    50: '#fdf2f8',
-    100: '#fce7f3',
-    500: '#ec4899',
-    600: '#db2777',
+    50: '#fce8e6',
+    100: '#fad2cf',
+    500: '#ea4335', // Google Red
+    600: '#d93025',
   },
-  // Neutrals (Slate)
+  // Google Flat Neutrals
   neutral: {
-    50: '#f8fafc',
-    100: '#f1f5f9',
-    200: '#e2e8f0',
-    300: '#cbd5e1',
-    400: '#94a3b8',
-    500: '#64748b',
-    600: '#475569',
-    700: '#334155',
-    800: '#1e293b',
-    900: '#0f172a',
-    950: '#020617',
+    50: '#f8f9fa',  // Google Soft Light Background
+    100: '#f1f3f4', // Google Chat / Surface Neutral
+    200: '#e8eaed', // Light Border Neutral
+    300: '#dadce0', // Standard Flat Border
+    400: '#9aa0a6', // Secondary Text
+    500: '#70757a',
+    600: '#5f6368', // Body Text Neutral
+    700: '#3c4043',
+    800: '#202124', // Google Dark Surface
+    900: '#171717',
+    950: '#000000',
   },
-  // Semantic status
-  success: '#10b981',
-  warning: '#f59e0b',
-  danger: '#ef4444',
-  info: '#3b82f6',
+  // Google Semantic status
+  success: '#137333', // Google Green
+  warning: '#fbbc04', // Google Yellow
+  danger: '#d93025',  // Google Red
+  info: '#1a73e8',    // Google Blue
 
-  // Glassmorphism overlays
-  glassLight: 'rgba(255, 255, 255, 0.75)',
-  glassDark: 'rgba(30, 41, 59, 0.75)',
-  glassBorderLight: 'rgba(255, 255, 255, 0.4)',
-  glassBorderDark: 'rgba(255, 255, 255, 0.1)',
+  // Pure Flat Overlays (No glassmorphism blur)
+  glassLight: 'rgba(255, 255, 255, 1)',
+  glassDark: 'rgba(32, 33, 36, 1)',
+  glassBorderLight: '#dadce0',
+  glassBorderDark: '#3c4043',
 };
