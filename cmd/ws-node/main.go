@@ -2,178 +2,166 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"snack/internal/api"
 	"time"
 
+	"snack/internal/db"
 	ws "snack/internal/websocket"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/redis/go-redis/v9"
-	"github.com/segmentio/kafka-go"
+	"gorm.io/gorm"
 )
 
 var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
+	CheckOrigin:     func(r *http.Request) bool { return true },
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
 }
+
+const ConnectionDeadline = 30 * time.Second
+const PingPeriod = 10 * time.Second
 
 func main() {
 	nodeID := getEnv("NODE_ID", "node-1")
 	port := getEnv("PORT", "8080")
 	redisAddr := getEnv("REDIS_ADDR", "localhost:6379")
-	kafkaAddr := getEnv("KAFKA_ADDR", "localhost:9092")
+	postgresDSN := getEnv("POSTGRES_DSN", "host=localhost user=snack password=snackpassword dbname=snackdb port=5432 sslmode=disable")
 
-	log.Printf("[%s] Starting WebSocket Node on port :%s", nodeID, port)
+	// 1. Initialize PostgreSQL Database via GORM (Connection only)
+	var gormDB *gorm.DB
+	var err error
+	for i := 0; i < 5; i++ {
+		gormDB, err = db.InitDB(postgresDSN)
+		if err == nil {
+			break
+		}
+		log.Printf("[%s] PostgreSQL connection retry %d/5: %v", nodeID, i+1, err)
+		time.Sleep(3 * time.Second)
+	}
+	if err != nil {
+		log.Printf("[%s] Warning: Running without PostgreSQL DB connection (%v)", nodeID, err)
+	} else {
+		_ = gormDB
+	}
 
-	// 1. Setup Redis Client
+	// 2. Setup Redis Client
 	rdb := redis.NewClient(&redis.Options{Addr: redisAddr})
 	ctx := context.Background()
 
-	// 2. Setup Kafka
-	kafkaWriter := &kafka.Writer{
-		Addr:     kafka.TCP(kafkaAddr),
-		Topic:    "chat-events",
-		Balancer: &kafka.LeastBytes{},
-	}
+	// 5. Initialize Gin Engine Web Routes
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.Default()
 
-	// 3. Setup WebSocket Hub
-	hub := ws.NewHub()
-	go hub.Run()
+	// Server RESTs Api
+	api.Register(r, gormDB)
 
-	// 4. Subscribe to Redis PubSub (Listen for responses from Workers)
-	go listenRedisPubSub(ctx, rdb, hub, nodeID)
-
-	// 5. HTTP & WebSocket Route
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "OK from %s", nodeID)
+	// Health Check Route
+	r.GET("/health", func(c *gin.Context) {
+		c.String(http.StatusOK, "OK from %s", nodeID)
 	})
 
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		conn, err := upgrader.Upgrade(w, r, nil)
+	// Start WebSocket Manager
+	manager := ws.NewManager()
+	go manager.Run()
+
+	// 4. Subscribe to Redis PubSub (Listen for responses from Workers)
+	go listenRedisPubSub(ctx, rdb, manager, nodeID)
+
+	// WebSocket Endpoint
+	r.GET("/ws", func(c *gin.Context) {
+		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+
 		if err != nil {
 			log.Printf("[%s] WS Upgrade error: %v", nodeID, err)
 			return
 		}
-
-		clientID := r.URL.Query().Get("client_id")
-		if clientID == "" {
-			clientID = fmt.Sprintf("client-%d", time.Now().UnixNano())
+		userId := 1
+		user, err := ws.NewUser(conn, uint(userId))
+		if err != nil {
+			_ = conn.Close()
+			return
 		}
+		manager.Register <- user
 
-		client := &ws.Client{
-			ID:   clientID,
-			Conn: conn,
-			Send: make(chan []byte, 256),
-		}
-
-		hub.Register(client)
-
-		// Record connection in Redis Hub (Client -> Node mapping)
-		rdb.HSet(ctx, "ws_clients", clientID, nodeID)
-
-		// Send Welcome Hello World Event
-		welcomeMsg, _ := json.Marshal(ws.MessageEvent{
-			Type:     "welcome",
-			ClientID: clientID,
-			Payload:  fmt.Sprintf("Hello World from WS Backend %s!", nodeID),
-			NodeID:   nodeID,
-		})
-		client.Send <- welcomeMsg
-
-		// Read loop & Write loop
-		go readPump(client, hub, kafkaWriter, nodeID, rdb)
-		go writePump(client, hub, rdb, nodeID)
+		go readPump(ctx, rdb, user, manager)
+		go writePump(user, manager)
 	})
 
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(r.Run(":" + port))
 }
 
-func readPump(c *ws.Client, hub *ws.Hub, kw *kafka.Writer, nodeID string, rdb *redis.Client) {
+func readPump(ctx context.Context, rdb *redis.Client, user *ws.User, manager *ws.Manager) {
 	defer func() {
-		rdb.HDel(context.Background(), "ws_clients", c.ID)
-		hub.Unregister(c)
-		c.Conn.Close()
+		log.Printf("Client disconnected")
+		manager.Unregister <- user
+		_ = user.Conn.Close()
 	}()
 
-	c.Conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-	c.Conn.SetPongHandler(func(string) error {
-		c.Conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	_ = user.Conn.SetReadDeadline(time.Now().Add(ConnectionDeadline))
+	user.Conn.SetPongHandler(func(string) error {
+		_ = user.Conn.SetReadDeadline(time.Now().Add(ConnectionDeadline))
 		return nil
 	})
 
 	for {
-		_, message, err := c.Conn.ReadMessage()
+		_, p, err := user.Conn.ReadMessage()
 		if err != nil {
-			break
+			return
 		}
 
-		log.Printf("[%s] Received from client [%s]: %s", nodeID, c.ID, string(message))
-
-		// Construct Kafka Event
-		event := ws.MessageEvent{
-			Type:     "chat_message",
-			ClientID: c.ID,
-			Payload:  string(message),
-			NodeID:   nodeID,
-		}
-		eventBytes, _ := json.Marshal(event)
-
-		// Produce event to Kafka for Worker to process
-		err = kw.WriteMessages(context.Background(), kafka.Message{
-			Key:   []byte(c.ID),
-			Value: eventBytes,
-		})
+		err = rdb.Publish(ctx, "channel1", p).Err()
 		if err != nil {
-			log.Printf("[%s] Kafka produce error: %v", nodeID, err)
+			return
 		}
 	}
 }
 
-func writePump(c *ws.Client, hub *ws.Hub, rdb *redis.Client, nodeID string) {
-	ticker := time.NewTicker(30 * time.Second)
+func writePump(user *ws.User, manager *ws.Manager) {
+	ticker := time.NewTicker(PingPeriod)
+
 	defer func() {
 		ticker.Stop()
-		c.Conn.Close()
+		_ = user.Conn.Close()
 	}()
+
+	greater := fmt.Sprintf("Welcome Client %s", user.ClientID)
+	err := user.Conn.WriteMessage(websocket.TextMessage, []byte(greater))
+	if err != nil {
+		return
+	}
 
 	for {
 		select {
-		case message, ok := <-c.Send:
-			c.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-			if !ok {
-				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
-				return
-			}
-
-			w, err := c.Conn.NextWriter(websocket.TextMessage)
+		case p := <-user.Send:
+			fmt.Printf("Sending message: %s\n", p)
+			err := user.Conn.WriteMessage(websocket.TextMessage, p)
 			if err != nil {
-				return
-			}
-			w.Write(message)
-			if err := w.Close(); err != nil {
 				return
 			}
 
 		case <-ticker.C:
-			c.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+			err := user.Conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(ConnectionDeadline))
+			if err != nil {
 				return
 			}
 		}
 	}
 }
 
-func listenRedisPubSub(ctx context.Context, rdb *redis.Client, hub *ws.Hub, nodeID string) {
-	pubsub := rdb.Subscribe(ctx, "ws-outbound")
+func listenRedisPubSub(ctx context.Context, rdb *redis.Client, manager *ws.Manager, nodeID string) {
+	pubsub := rdb.Subscribe(ctx, "channel1")
 	defer pubsub.Close()
 
 	ch := pubsub.Channel()
 	for msg := range ch {
 		log.Printf("[%s] Redis PubSub received: %s", nodeID, msg.Payload)
-		hub.Broadcast([]byte(msg.Payload))
+		manager.Broadcast <- []byte(msg.Payload)
 	}
 }
 

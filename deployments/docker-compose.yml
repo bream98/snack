@@ -18,6 +18,7 @@ services:
       dockerfile_inline: |
         FROM golang:1.22-alpine
         WORKDIR /app
+        ENV GOTOOLCHAIN=auto
         COPY . .
         RUN go mod tidy
         RUN go build -o /ws-node cmd/ws-node/main.go
@@ -28,9 +29,15 @@ services:
       - PORT=8080
       - REDIS_ADDR=redis:6379
       - KAFKA_ADDR=kafka:9092
+      - POSTGRES_DSN=host=postgres user=snack password=snackpassword dbname=snackdb port=5432 sslmode=disable
+      - JWT_SECRET=secret
     depends_on:
-      - redis
-      - kafka
+      redis:
+        condition: service_started
+      kafka:
+        condition: service_started
+      postgres:
+        condition: service_healthy
 
   # 2. Backend WebSocket Node 2
   ws-node-2:
@@ -39,6 +46,7 @@ services:
       dockerfile_inline: |
         FROM golang:1.22-alpine
         WORKDIR /app
+        ENV GOTOOLCHAIN=auto
         COPY . .
         RUN go mod tidy
         RUN go build -o /ws-node cmd/ws-node/main.go
@@ -49,9 +57,15 @@ services:
       - PORT=8080
       - REDIS_ADDR=redis:6379
       - KAFKA_ADDR=kafka:9092
+      - POSTGRES_DSN=host=postgres user=snack password=snackpassword dbname=snackdb port=5432 sslmode=disable
+      - JWT_SECRET=secret
     depends_on:
-      - redis
-      - kafka
+      redis:
+        condition: service_started
+      kafka:
+        condition: service_started
+      postgres:
+        condition: service_healthy
 
   # 3. Redis Session Hub & PubSub Broker
   redis:
@@ -59,7 +73,22 @@ services:
     ports:
       - "6379:6379"
 
-  # 4. Zookeeper & Kafka Event Bus
+  # 4. PostgreSQL Relational Database
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: snack
+      POSTGRES_PASSWORD: snackpassword
+      POSTGRES_DB: snackdb
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U snack -d snackdb"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+
+  # 5. Zookeeper & Kafka Event Bus
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     environment:
@@ -78,13 +107,14 @@ services:
     depends_on:
       - zookeeper
 
-  # 5. Kafka Event Worker
+  # 6. Kafka Event Worker
   worker-1:
     build:
       context: ..
       dockerfile_inline: |
         FROM golang:1.22-alpine
         WORKDIR /app
+        ENV GOTOOLCHAIN=auto
         COPY . .
         RUN go mod tidy
         RUN go build -o /worker cmd/worker/main.go
@@ -94,6 +124,11 @@ services:
       - WORKER_ID=worker-1
       - REDIS_ADDR=redis:6379
       - KAFKA_ADDR=kafka:9092
+      - POSTGRES_DSN=host=postgres user=snack password=snackpassword dbname=snackdb port=5432 sslmode=disable
     depends_on:
-      - redis
-      - kafka
+      redis:
+        condition: service_started
+      kafka:
+        condition: service_started
+      postgres:
+        condition: service_healthy
