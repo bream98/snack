@@ -6,11 +6,13 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"snack/internal/api"
+	"snack/internal/repo"
+	"snack/internal/rest_api"
+	"strings"
 	"time"
 
 	"snack/internal/db"
-	ws "snack/internal/websocket"
+	ws "snack/internal/message"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -22,6 +24,7 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true },
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	Subprotocols:    []string{"access_token"},
 }
 
 const ConnectionDeadline = 30 * time.Second
@@ -59,7 +62,7 @@ func main() {
 	r := gin.Default()
 
 	// Server RESTs Api
-	api.Register(r, gormDB)
+	rest_api.Register(r, gormDB)
 
 	// Health Check Route
 	r.GET("/health", func(c *gin.Context) {
@@ -71,32 +74,62 @@ func main() {
 	go manager.Run()
 
 	// 4. Subscribe to Redis PubSub (Listen for responses from Workers)
-	go listenRedisPubSub(ctx, rdb, manager, nodeID)
+	redisService := ws.RedisService{RedisDb: rdb, Ctx: ctx, Manager: manager}
+	go redisService.ListenOutboundChannel()
 
-	// WebSocket Endpoint
+	// Create object to handle WebSocket connections
+	userRepo := &repo.UserRepo{Db: gormDB}
+	directChannelRepo := &repo.DirectChannelRepo{Db: gormDB}
+	peerService := &ws.PeerService{
+		Db:                gormDB,
+		UserRepo:          userRepo,
+		DirectChannelRepo: directChannelRepo,
+	}
+	clientProcessor := &ws.ClientProcessor{PeerService: peerService}
+
+	// WebSocket Endpoint with Subprotocol Auth Support
 	r.GET("/ws", func(c *gin.Context) {
-		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+		authClaims, err := ws.CheckToken(c)
+		if err != nil {
+			log.Printf("[%s] WS Auth failed: %v", nodeID, err)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
+		}
 
+		responseHeader := make(http.Header)
+		if sub := c.Request.Header.Get("Sec-WebSocket-Protocol"); sub != "" {
+			parts := strings.Split(sub, ",")
+			if len(parts) > 0 {
+				responseHeader.Set("Sec-WebSocket-Protocol", strings.TrimSpace(parts[0]))
+			}
+		}
+
+		conn, err := upgrader.Upgrade(c.Writer, c.Request, responseHeader)
 		if err != nil {
 			log.Printf("[%s] WS Upgrade error: %v", nodeID, err)
 			return
 		}
-		userId := 1
-		user, err := ws.NewUser(conn, uint(userId))
+
+		client, err := ws.NewUser(conn, authClaims.UserID)
 		if err != nil {
 			_ = conn.Close()
 			return
 		}
-		manager.Register <- user
+		manager.Register <- client
 
-		go readPump(ctx, rdb, user, manager)
-		go writePump(user, manager)
+		go readPump(ctx, client, manager, clientProcessor)
+		go writePump(client, manager)
 	})
 
 	log.Fatal(r.Run(":" + port))
 }
 
-func readPump(ctx context.Context, rdb *redis.Client, user *ws.User, manager *ws.Manager) {
+func readPump(
+	ctx context.Context,
+	user *ws.Client,
+	manager *ws.Manager,
+	clientProcessor *ws.ClientProcessor,
+) {
 	defer func() {
 		log.Printf("Client disconnected")
 		manager.Unregister <- user
@@ -115,14 +148,11 @@ func readPump(ctx context.Context, rdb *redis.Client, user *ws.User, manager *ws
 			return
 		}
 
-		err = rdb.Publish(ctx, "channel1", p).Err()
-		if err != nil {
-			return
-		}
+		clientProcessor.Handle(user, p)
 	}
 }
 
-func writePump(user *ws.User, manager *ws.Manager) {
+func writePump(user *ws.Client, manager *ws.Manager) {
 	ticker := time.NewTicker(PingPeriod)
 
 	defer func() {
@@ -151,17 +181,6 @@ func writePump(user *ws.User, manager *ws.Manager) {
 				return
 			}
 		}
-	}
-}
-
-func listenRedisPubSub(ctx context.Context, rdb *redis.Client, manager *ws.Manager, nodeID string) {
-	pubsub := rdb.Subscribe(ctx, "channel1")
-	defer pubsub.Close()
-
-	ch := pubsub.Channel()
-	for msg := range ch {
-		log.Printf("[%s] Redis PubSub received: %s", nodeID, msg.Payload)
-		manager.Broadcast <- []byte(msg.Payload)
 	}
 }
 

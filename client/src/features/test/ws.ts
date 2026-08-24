@@ -1,10 +1,4 @@
-const ws = new WebSocket('ws://localhost/ws?client_id=user-123');
+const token = localStorage.getItem('token') || '';
+const ws = new WebSocket('ws://localhost/ws', ['access_token', token]);
 
-ws.onopen = () => {
-    console.log('Connected to Proxy!');
-    ws.send('Hello World from Client!');
-};
-
-ws.onmessage = (event) => {
-    console.log('Received:', event.data);
-};
+export default ws;

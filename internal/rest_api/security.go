@@ -1,4 +1,4 @@
-package api
+package rest_api
 
 import (
 	"net/http"
@@ -17,13 +17,13 @@ type securityService struct {
 }
 
 type loginRequest struct {
-	Phone    string `binding:"required,phone"`
-	Password string `binding:"required,min=6,max=16"`
+	Phone    string `json:"phone" binding:"required,min=9,max=15"`
+	Password string `json:"password" binding:"required,min=6,max=32"`
 }
 
 type loginResponse struct {
-	Token string `json:"token"`
-	User  *domain.User
+	Token string       `json:"token"`
+	User  *domain.User `json:"user"`
 }
 
 func (s *securityService) login(c *gin.Context) {
@@ -37,15 +37,15 @@ func (s *securityService) login(c *gin.Context) {
 
 	user, e := s.userRepo.FindByPhone(body.Phone)
 	if e != nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{
-			Message: e.Error(),
+		c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Message: "Số điện thoại hoặc mật khẩu không chính xác",
 		})
 		return
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(user.HashPassword), []byte(body.Password)) != nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{
-			Message: "Invalid password",
+		c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Message: "Số điện thoại hoặc mật khẩu không chính xác",
 		})
 		return
 	}
@@ -59,14 +59,21 @@ func (s *securityService) login(c *gin.Context) {
 		},
 	}
 
-	token, _ := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(jwtSecret))
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(jwtSecret))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: "Không thể khởi tạo mã phiên làm việc",
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, SuccessResponse{Data: loginResponse{Token: token, User: user}})
 }
 
 type registerRequest struct {
-	Phone       string `binding:"required,phone"`
-	DisplayName string `binding:"required,min=2,max=16"`
-	Password    string `binding:"required,min=6,max=16"`
+	Phone       string `json:"phone" binding:"required,min=9,max=15"`
+	DisplayName string `json:"display_name" binding:"required,min=2,max=32"`
+	Password    string `json:"password" binding:"required,min=6,max=32"`
 }
 
 func (s *securityService) register(c *gin.Context) {
@@ -78,17 +85,33 @@ func (s *securityService) register(c *gin.Context) {
 		return
 	}
 
-	hashPassword, _ := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
+	// Check if phone number already registered
+	existingUser, _ := s.userRepo.FindByPhone(body.Phone)
+	if existingUser != nil && existingUser.ID > 0 {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Message: "Số điện thoại đã được đăng ký trên hệ thống",
+		})
+		return
+	}
+
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Message: "Lỗi mã hóa mật khẩu",
+		})
+		return
+	}
+
 	user := domain.User{
 		Phone:        body.Phone,
 		DisplayName:  body.DisplayName,
 		HashPassword: string(hashPassword),
 	}
 
-	err := s.userRepo.Save(&user)
+	err = s.userRepo.Save(&user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{
-			Message: err.Error(),
+			Message: "Không thể lưu thông tin tài khoản",
 		})
 		return
 	}

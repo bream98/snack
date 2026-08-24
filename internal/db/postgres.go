@@ -24,10 +24,15 @@ func InitDB(dsn string) (*gorm.DB, error) {
 		sqlDB.SetConnMaxLifetime(time.Hour)
 	}
 
+	// Acquire PostgreSQL Advisory Lock to prevent migration race conditions across multiple nodes
+	db.Exec("SELECT pg_advisory_lock(999999)")
+	defer db.Exec("SELECT pg_advisory_unlock(999999)")
+
 	// Auto migrate schema
 	err = db.AutoMigrate(
 		&domain.User{},
-		&domain.Channel{},
+		&domain.DirectChannel{},
+		&domain.DirectMember{},
 		&domain.Message{},
 	)
 	if err != nil {

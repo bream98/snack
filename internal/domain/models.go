@@ -1,35 +1,37 @@
 package domain
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
 // User represents a user account stored in PostgreSQL
 type User struct {
 	gorm.Model
-	Phone        string `gorm:"uniqueIndex;type:varchar(16);not null"`
-	DisplayName  string `gorm:"type:varchar(64);not null"`
-	HashPassword string `gorm:"type:varchar(255);not null"`
+	Phone        string `gorm:"uniqueIndex;type:varchar(16);not null" json:"phone"`
+	DisplayName  string `gorm:"type:varchar(64);not null" json:"display_name"`
+	HashPassword string `gorm:"type:varchar(255);not null" json:"-"`
 }
 
-// Channel represents a chat room channel in PostgreSQL
-type Channel struct {
-	ID          string    `gorm:"primaryKey;type:varchar(64)" json:"id"`
-	Name        string    `gorm:"uniqueIndex;type:varchar(64);not null" json:"name"`
-	Description string    `gorm:"type:varchar(255)" json:"description"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+type DirectChannel struct {
+	gorm.Model
+	UserId1 uint `gorm:"index:idx_user1_user2;not null" json:"user_id_1"`
+	User1   User `gorm:"foreignKey:UserId1" json:"user_1,omitempty"`
+	UserId2 uint `gorm:"index:idx_user1_user2;not null" json:"user_id_2"`
+	User2   User `gorm:"foreignKey:UserId2" json:"user_2,omitempty"`
 }
 
-// Message represents a chat message stored in PostgreSQL
 type Message struct {
-	ID         int64     `gorm:"primaryKey;autoIncrement:false" json:"id"` // Snowflake 64-bit ID
-	ChannelID  string    `gorm:"index;type:varchar(64)" json:"channel_id"`
-	SenderID   string    `gorm:"index;type:varchar(64)" json:"sender_id"`
-	SenderName string    `gorm:"type:varchar(64)" json:"sender_name"`
-	Content    string    `gorm:"type:text;not null" json:"content"`
-	NodeID     string    `gorm:"type:varchar(32)" json:"node_id"`
-	CreatedAt  time.Time `gorm:"index" json:"created_at"`
+	gorm.Model
+	ChannelId uint          `gorm:"index:idx_channel_id;not null" json:"channel_id"`
+	Channel   DirectChannel `json:"channel,omitempty"`
+	UserId    uint          `gorm:"index:idx_user_id;not null" json:"user_id"`
+	User      User          `gorm:"foreignKey:UserId" json:"user,omitempty"`
+	Value     string        `gorm:"type:varchar(255);not null" json:"value"`
+}
+
+type DirectMember struct {
+	gorm.Model
+	ChannelId uint          `gorm:"index:idx_channel_id;not null" json:"channel_id"`
+	Channel   DirectChannel `json:"channel,omitempty"`
+	UserId    uint          `gorm:"uniqueIndex;index:idx_user_id;not null" json:"user_id"`
 }

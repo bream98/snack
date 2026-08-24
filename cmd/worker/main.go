@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	ws "snack/internal/websocket"
+	ws "snack/internal/message"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/segmentio/kafka-go"
