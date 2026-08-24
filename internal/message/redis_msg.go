@@ -3,7 +3,6 @@ package message
 import (
 	"encoding/json"
 	"errors"
-	"snack/internal/domain"
 )
 
 type NewPeerMsgPayload struct {
@@ -28,8 +27,8 @@ type PublishRedisMessage struct {
 }
 
 type PublishRedisPayload struct {
-	To  uint            `json:"to"`
-	Msg *domain.Message `json:"msg"`
+	To  uint           `json:"to"`
+	Msg *ServerMessage `json:"msg"`
 }
 
 func ParseMessage(msg []byte) (*RedisMessage, error) {

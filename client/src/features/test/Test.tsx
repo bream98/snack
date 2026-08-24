@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Button, Input } from '../../design-system';
 import {toast} from "../../components/common/Toast.tsx";
+import {useParams} from "react-router-dom";
+import { SendIcon } from "lucide-react";
 
 type PeerMsgPayload = {
   to: number,
@@ -18,9 +20,8 @@ type NewMessage = {
   id: number,
   value: string,
   user_id: number,
-  created_at: string,
-  updated_at: string,
-  deleted_at: string,
+  CreatedAt: string,
+  DeletedAt: string,
 }
 
 type ErrorPayload = {
@@ -36,9 +37,11 @@ type ServerMessage<T> = {
 export const Test = () => {
   const [message, setMessage] = useState('');
   const wsRef = useRef<WebSocket | null>(null);
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<NewMessage[]>([]);
   const [isDisconnected, setIsDisconnected] = useState<boolean>(false);
 
+  const params = useParams()
+  const toId = Number(params.toId)
 
   useEffect(() => {
     if (wsRef.current) return;
@@ -68,7 +71,7 @@ export const Test = () => {
         toast.error(errorPayload.msg);
       } else if (data.action === 'new_message_response') {
         const newMessage = data.payload as NewMessage;
-        setMessages((prevMessages) => [...prevMessages, newMessage.value]);
+        setMessages((prevMessages) => [...prevMessages, newMessage]);
       }
     };
 
@@ -87,11 +90,15 @@ export const Test = () => {
   }, []);
 
   const send = () => {
+    if (!message.trim() || !toId || isNaN(toId)) {
+      toast.error("Invalid config")
+      return;
+    }
     const msg: Message<PeerMsgPayload> = {
       trace_id: '1234567890',
       action: 'send_peer_message',
       payload: {
-        to: 1,
+        to: toId,
         msg: message,
       }
     }
@@ -106,21 +113,27 @@ export const Test = () => {
       {isDisconnected && <Alert>Mất kết nôi</Alert>}
 
       <ListMessages>
-        {messages.map((msg, index) => (
-          <p key={index}>{msg}</p>
+        {messages.map((msg, _) => (
+          <MessageElement key={msg.id}>
+            <small>{msg.user_id}</small>
+            <div>{msg.value}</div>
+            <i>{new Date(msg.CreatedAt).toLocaleTimeString()}</i>
+          </MessageElement>
         ))}
       </ListMessages>
 
       <SendMessageInput>
-        <Input
+        <ChatInput
           autoFocus
           type="text"
-          placeholder="Enter message"
+          placeholder="Gửi"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && send()}
         />
-        <Button onClick={send}>Send</Button>
+        <Button onClick={send}>
+          <SendIcon />
+        </Button>
       </SendMessageInput>
     </Container>
   );
@@ -135,14 +148,6 @@ const Container = styled.div`
 `;
 
 const ListMessages = styled.div`
-  p {
-    margin: 10px 0;
-    padding: 10px;
-    font-size: 18px;
-    &:hover {
-      background-color: #f0f0f0;
-    }
-  }
 `;
 
 const SendMessageInput = styled.div`
@@ -152,11 +157,32 @@ const SendMessageInput = styled.div`
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 10px;
+  padding: 16px 24px;
+  background-color: lightsteelblue;
 `;
 
 const Alert = styled.div`
     background-color: #f44336;
     color: white;
     padding: 10px;
+`
+
+const MessageElement = styled.div`
+  margin: 10px 0;
+  padding: 10px;
+  font-size: 18px;
+  &:hover {
+    background-color: #f0f0f0;
+  }
+`
+
+const ChatInput = styled(Input)`
+  flex: 1;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  &:focus {
+    outline: none;
+    border-color: #007bff;
 `

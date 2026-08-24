@@ -74,7 +74,7 @@ func main() {
 	go manager.Run()
 
 	// 4. Subscribe to Redis PubSub (Listen for responses from Workers)
-	redisService := ws.RedisService{RedisDb: rdb, Ctx: ctx, Manager: manager}
+	redisService := &ws.RedisService{RedisDb: rdb, Ctx: ctx, Manager: manager}
 	go redisService.ListenOutboundChannel()
 
 	// Create object to handle WebSocket connections
@@ -84,6 +84,7 @@ func main() {
 		Db:                gormDB,
 		UserRepo:          userRepo,
 		DirectChannelRepo: directChannelRepo,
+		RedisService:      redisService,
 	}
 	clientProcessor := &ws.ClientProcessor{PeerService: peerService}
 

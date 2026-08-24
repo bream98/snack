@@ -65,7 +65,7 @@ func (p *PeerService) HandleNewMsg(user *Client, b []byte) error {
 		Action: ActionHandleDirectMsg,
 		Payload: PublishRedisPayload{
 			To:  payload.To,
-			Msg: msg,
+			Msg: &serverMessage,
 		},
 	}
 	err = p.RedisService.Publish(redisMessage)

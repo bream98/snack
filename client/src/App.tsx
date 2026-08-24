@@ -66,7 +66,7 @@ export function App() {
         />
 
         {/* Test Route */}
-        <Route path="/test" element={<Test />} />
+        <Route path="/test/:toId" element={<Test />} />
 
         {/* Catch-all Route */}
         <Route

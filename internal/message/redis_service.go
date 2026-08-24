@@ -17,7 +17,11 @@ type RedisService struct {
 const WsOutboundChannel = "ws_outbound_channel"
 
 func (r *RedisService) Publish(msg *PublishRedisMessage) error {
-	return r.RedisDb.Publish(r.Ctx, WsOutboundChannel, msg).Err()
+	bytes, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+	return r.RedisDb.Publish(r.Ctx, WsOutboundChannel, bytes).Err()
 }
 
 func (r *RedisService) ListenOutboundChannel() {
