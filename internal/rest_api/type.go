@@ -11,6 +11,7 @@ type SuccessResponse struct {
 }
 
 type AuthClaims struct {
-	UserID uint `json:"user_id"`
+	UserID      uint   `json:"user_id"`
+	DisplayName string `json:"display_name"`
 	jwt.RegisteredClaims
 }

@@ -52,7 +52,8 @@ func (s *securityService) login(c *gin.Context) {
 
 	jwtSecret := getEnv("JWT_SECRET", "secret")
 	claims := AuthClaims{
-		UserID: user.ID,
+		UserID:      user.ID,
+		DisplayName: user.DisplayName,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 30)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

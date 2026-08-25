@@ -68,3 +68,18 @@ func (u *userService) UpdateMe(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, SuccessResponse{Data: user})
 }
+
+func (u *userService) FindByPhoneOrEmail(c *gin.Context) {
+	search := c.Query("search")
+	if search == "" {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "search is empty"})
+		return
+	}
+
+	users, err := u.userRepo.FindByPhoneOrName(search)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, SuccessResponse{Data: users})
+}

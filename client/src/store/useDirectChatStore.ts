@@ -63,7 +63,7 @@ interface ChatState {
   clearError: () => void;
 }
 
-export const useChatStore = create<ChatState>((set, get) => ({
+export const useDirectChatStore = create<ChatState>((set, get) => ({
   directChannels: [],
   directMessagesByChannel: {},
   activeChannelId: null,

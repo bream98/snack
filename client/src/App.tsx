@@ -9,6 +9,7 @@ import { AuthLayout } from './layouts/AuthLayout';
 import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { HomePage } from './features/home/HomePage';
+import { NewChannelPage } from './features/channel/NewChannelPage';
 import { ChannelMessagePage } from './features/message/ChannelMessagePage';
 import { DirectMessagePage } from './features/message/DirectMessagePage';
 import { Test } from './features/test/Test';
@@ -67,6 +68,7 @@ export function App() {
           }
         >
           <Route index element={<Navigate to="/" replace />} />
+          <Route path="channels/new" element={<NewChannelPage />} />
           <Route path="direct-message/:toId" element={<DirectMessagePage />} />
           <Route path="channel_message/:channelId" element={<ChannelMessagePage />} />
         </Route>

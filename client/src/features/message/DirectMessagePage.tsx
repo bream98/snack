@@ -2,11 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Button, Input } from '../../design-system';
 import {toast} from "../../components/common/Toast.tsx";
 import {useParams, useSearchParams} from "react-router-dom";
-import { SendIcon } from "lucide-react";
-import {type DirectMessageDB, useChatStore} from "../../store/useChatStore.ts";
+import {type DirectMessageDB, useDirectChatStore} from "../../store/useDirectChatStore.ts";
+import MessageInput from "../../components/message/MessageInput.tsx";
 
 type PeerMsgPayload = {
   to: number,
@@ -44,7 +43,7 @@ export const DirectMessagePage = () => {
   const channelIdStr = searchParams.get('channelId');
   const channelId = channelIdStr ? Number(channelIdStr) : null;
 
-  const { fetchDirectMessages, directMessagesByChannel } = useChatStore()
+  const { fetchDirectMessages, directMessagesByChannel } = useDirectChatStore()
 
   useEffect(() => {
     if (wsRef.current) return;
@@ -128,26 +127,19 @@ export const DirectMessagePage = () => {
         <ListMessages>
           {messages.map((msg, _) => (
               <MessageElement key={msg.ID}>
-                <small>{msg.user_id}</small>
+                <Sender>{msg.user?.display_name}</Sender>
                 <div>{msg.value}</div>
-                <i>{new Date(msg.CreatedAt).toLocaleTimeString()}</i>
+                <small>{new Date(msg.CreatedAt).toLocaleTimeString()}</small>
               </MessageElement>
           ))}
         </ListMessages>
 
-        <SendMessageInput>
-          <ChatInput
-              autoFocus
-              type="text"
-              placeholder="Gửi"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && send()}
+          <MessageInput
+              message={message}
+              setMessage={(msg) => setMessage(msg)}
+              send={send}
           />
-          <Button onClick={send}>
-            <SendIcon />
-          </Button>
-        </SendMessageInput>
+
       </Container>
   );
 };
@@ -162,17 +154,7 @@ const Container = styled.div`
 const ListMessages = styled.div`
 `;
 
-const SendMessageInput = styled.div`
-  display: flex;
-  gap: 10px;
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  
-  padding: 16px 24px;
-  background-color: lightsteelblue;
-`;
+
 
 const Alert = styled.div`
     background-color: #f44336;
@@ -183,19 +165,21 @@ const Alert = styled.div`
 const MessageElement = styled.div`
   margin: 10px 0;
   padding: 10px;
-  font-size: 18px;
   &:hover {
     background-color: #f0f0f0;
   }
+
+  font-size: 1.2rem;
+  
+  
+  
+  small {
+    font-size: 0.8rem;
+  }
 `
 
-const ChatInput = styled(Input)`
-  flex: 1;
-  border-radius: 8px;
-  padding: 10px 20px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  &:focus {
-    outline: none;
-    border-color: #007bff;
+const Sender = styled.div`
+  font-weight: 500;
+  font-size: 1rem;
 `
+

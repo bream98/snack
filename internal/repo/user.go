@@ -34,3 +34,13 @@ func (r *UserRepo) FindByPhone(phone string) (*domain.User, error) {
 	err := r.Db.Where("phone = ?", phone).First(user).Error
 	return user, err
 }
+
+func (r *UserRepo) FindByPhoneOrName(search string) ([]*domain.User, error) {
+	var users []*domain.User
+	limit := 10
+	err := r.Db.Where("phone = ? OR display_name LIKE ?", search, "%"+search+"%").
+		Limit(limit).
+		Find(&users).Error
+
+	return users, err
+}

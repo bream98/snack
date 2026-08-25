@@ -19,7 +19,7 @@ func (c *ClientProcessor) Handle(user *Client, msg []byte) {
 
 	switch clientMsg.Action {
 	case SendPeerMessage:
-		err = c.PeerService.HandleNewMsg(user, clientMsg.Payload)
+		err = c.PeerService.HandleNewMsg(user, clientMsg)
 		if err != nil {
 			fmt.Println(err)
 			sendError(user, clientMsg, err)

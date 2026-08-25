@@ -17,15 +17,21 @@ type PeerService struct {
 	RedisService      *RedisService
 }
 
-func (p *PeerService) HandleNewMsg(user *Client, b []byte) error {
+func (p *PeerService) HandleNewMsg(user *Client, clientMessage *ClientMessage) error {
 	// -> Validate
-	payload, err := ParsePeerPayload(b)
+	payload, err := ParsePeerPayload(clientMessage.Payload)
 	if err != nil {
 		return err
 	}
 
 	if user.UserId == payload.To {
 		return errors.New("invalid receiver")
+	}
+
+	// -> get sender infomation
+	dbUser, err := p.UserRepo.GetUserById(user.UserId)
+	if err != nil {
+		return err
 	}
 
 	// -> Save message
@@ -45,11 +51,11 @@ func (p *PeerService) HandleNewMsg(user *Client, b []byte) error {
 	if err != nil {
 		return err
 	}
+	msg.User = *dbUser
 
 	// Send message to sender
-	fmt.Printf("Sending message: %s\n", msg)
 	serverMessage := ServerMessage{
-		TraceID: "1",
+		TraceID: clientMessage.TraceID,
 		Action:  NewMessageResponse,
 		Payload: msg,
 	}

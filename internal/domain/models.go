@@ -22,16 +22,36 @@ type DirectChannel struct {
 
 type Message struct {
 	gorm.Model
-	ChannelId uint          `gorm:"index:idx_channel_id;not null" json:"channel_id"`
-	Channel   DirectChannel `json:"channel,omitempty"`
-	UserId    uint          `gorm:"index:idx_user_id;not null" json:"user_id"`
-	User      User          `gorm:"foreignKey:UserId" json:"user,omitempty"`
-	Value     string        `gorm:"type:varchar(255);not null" json:"value"`
+	ChannelId uint `gorm:"index:idx_channel_id;not null" json:"channel_id"`
+	//Channel   DirectChannel `json:"channel,omitempty"`
+	UserId uint   `gorm:"index:idx_user_id;not null" json:"user_id"`
+	User   User   `gorm:"foreignKey:UserId" json:"user,omitempty"`
+	Value  string `gorm:"type:varchar(255);not null" json:"value"`
 }
 
 type DirectMember struct {
 	gorm.Model
-	ChannelId uint          `gorm:"index:idx_channel_id;not null" json:"channel_id"`
-	Channel   DirectChannel `json:"channel,omitempty"`
-	UserId    uint          `gorm:"uniqueIndex;index:idx_user_id;not null" json:"user_id"`
+	ChannelId     uint `gorm:"uniqueIndex:idx_direct_user;not null" json:"channel_id"`
+	UserId        uint `gorm:"uniqueIndex:idx_direct_user;not null" json:"user_id"`
+	LastMessageId uint
+}
+
+type Channel struct {
+	gorm.Model
+	Name string `gorm:"uniqueIndex;type:varchar(64);not null" json:"name"`
+}
+
+type ChannelMessage struct {
+	gorm.Model
+	ChannelId uint   `gorm:"index:idx_channel_id;not null" json:"channel_id"`
+	UserId    uint   `gorm:"index:idx_user_id;not null" json:"user_id"`
+	User      User   `gorm:"foreignKey:UserId" json:"user,omitempty"`
+	Value     string `gorm:"type:varchar(255);not null" json:"value"`
+}
+
+type ChannelMember struct {
+	gorm.Model
+	ChannelId     uint `gorm:"uniqueIndex:idx_channel_user;not null" json:"channel_id"`
+	UserId        uint `gorm:"uniqueIndex:idx_channel_user;not null" json:"user_id"`
+	LastMessageId uint
 }

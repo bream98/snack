@@ -73,3 +73,39 @@ func (r *DirectChannelRepo) GetDirectMessages(userId uint, channelId uint, fromM
 
 	return messages, nil
 }
+
+func (r *DirectChannelRepo) SetLastMsgId(channelId, userId, lastMsgId uint) error {
+	directMember := &domain.DirectMember{
+		ChannelId: channelId,
+		UserId:    userId,
+	}
+
+	err := r.Db.First(directMember).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	if directMember.ID == 0 {
+		directMember.ChannelId = channelId
+		directMember.UserId = userId
+		return r.Db.Create(directMember).Error
+	}
+
+	directMember.LastMessageId = lastMsgId
+	return r.Db.Save(directMember).Error
+}
+
+func (r *DirectChannelRepo) GetLastMsgId(channelId, userId uint) (uint, error) {
+	var directMember domain.DirectMember
+	err := r.Db.Where("channel_id = ? AND user_id = ?", channelId, userId).First(&directMember).Error
+	if err != nil {
+		return 0, err
+	}
+	return directMember.LastMessageId, nil
+}
+
+func (r *DirectChannelRepo) GetAllDirectMemberByUserId(userId uint) ([]*domain.DirectMember, error) {
+	var directMembers []*domain.DirectMember
+	err := r.Db.Where("user_id = ?", userId).Find(&directMembers).Error
+	return directMembers, err
+}
