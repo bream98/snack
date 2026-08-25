@@ -8,7 +8,9 @@ import { GlobalStyle } from './styles/GlobalStyle';
 import { AuthLayout } from './layouts/AuthLayout';
 import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
-import { DashboardLayout } from './components/layout/DashboardLayout';
+import { HomePage } from './features/home/HomePage';
+import { ChannelMessagePage } from './features/message/ChannelMessagePage';
+import { DirectMessagePage } from './features/message/DirectMessagePage';
 import { Test } from './features/test/Test';
 import { ToastContainer } from './components/common/Toast';
 
@@ -28,50 +30,55 @@ export function App() {
       <Routes>
         {/* Auth Routes */}
         <Route
-          path="/auth/login"
+          path="/login"
           element={
             !isAuthenticated ? (
               <AuthLayout>
                 <LoginPage />
               </AuthLayout>
             ) : (
-              <Navigate to="/app/cm/general" replace />
+              <Navigate to="/" replace />
             )
           }
         />
 
         <Route
-          path="/auth/register"
+          path="/register"
           element={
             !isAuthenticated ? (
               <AuthLayout>
                 <RegisterPage />
               </AuthLayout>
             ) : (
-              <Navigate to="/app/cm/general" replace />
+              <Navigate to="/" replace />
             )
           }
         />
 
-        {/* Protected App Routes */}
+        {/* Home Route with Child Routes inside Dashboard Section */}
         <Route
-          path="/app/*"
+          path="/"
           element={
             isAuthenticated ? (
-              <DashboardLayout />
+              <HomePage />
             ) : (
-              <Navigate to="/auth/login" replace />
+              <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={<Navigate to="/" replace />} />
+          <Route path="direct-message/:toId" element={<DirectMessagePage />} />
+          <Route path="channel_message/:channelId" element={<ChannelMessagePage />} />
+        </Route>
 
         {/* Test Route */}
+        <Route path="/test" element={<Test />} />
         <Route path="/test/:toId" element={<Test />} />
 
-        {/* Catch-all Route */}
+        {/* Catch-all Redirect */}
         <Route
           path="*"
-          element={<Navigate to={isAuthenticated ? '/app/cm/general' : '/auth/login'} replace />}
+          element={<Navigate to={isAuthenticated ? '/' : '/login'} replace />}
         />
       </Routes>
     </ThemeProvider>

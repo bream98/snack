@@ -19,6 +19,9 @@ func Register(r *gin.Engine, db *gorm.DB) {
 	userSvc := userService{userRepo: userRepo}
 	auth := checkAuth()
 
+	directChatRepo := &repo.DirectChannelRepo{Db: db}
+	directChatService := DirectChatService{directChannelRepo: directChatRepo}
+
 	// Public Auth Endpoints
 	r.POST("/login", security.login)
 	r.POST("/register", security.register)
@@ -26,6 +29,9 @@ func Register(r *gin.Engine, db *gorm.DB) {
 	// Protected User Endpoints
 	r.GET("/me", auth, userSvc.GetMe)
 	r.PUT("/me", auth, userSvc.UpdateMe)
+
+	r.GET("/direct-chat", auth, directChatService.GetDirectChannels)
+	r.GET("/direct-chat/messages/:channelId", auth, directChatService.GetDirectMessages)
 }
 
 func corsMiddleware() gin.HandlerFunc {

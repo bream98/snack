@@ -74,7 +74,6 @@ client/src/
 │   └── kanbanApi.ts
 ├── store/
 │   ├── useAuthStore.ts
-│   ├── useKanbanStore.ts
 │   └── useChatStore.ts
 ├── design-system/                  <-- Tokens & Primitives đã dựng
 │   ├── tokens/

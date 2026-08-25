@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { apiClient } from '../services/apiClient';
 
 export interface User {
-  id: number | string;
+  ID: number | string;
   display_name: string;
   phone: string;
 }

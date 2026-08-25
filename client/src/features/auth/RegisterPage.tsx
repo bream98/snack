@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Card, Button, Input, Heading, Text } from '../../design-system';
 
-const LoginCard = styled(Card)`
+const RegisterCard = styled(Card)`
   width: 100%;
   max-width: 420px;
   display: flex;
@@ -36,36 +36,69 @@ const SwitchLink = styled.button`
   }
 `;
 
-export function LoginPage() {
+export function RegisterPage() {
   const navigate = useNavigate();
-  const [phone, setPhone] = useState('0901234567');
-  const [password, setPassword] = useState('123456');
-  const { login, isLoading, error, clearError } = useAuthStore();
+  const [displayName, setDisplayName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  const { register, login, isLoading, error, clearError } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLocalError(null);
+
+    if (password !== confirmPassword) {
+      setLocalError('Mật khẩu nhập lại không trùng khớp');
+      return;
+    }
+
     try {
+      // 1. Register
+      await register(displayName, phone, password);
+      // 2. Auto-login on success
       await login(phone, password);
       navigate('/');
     } catch {
-      // Error handles in store
+      // Error handled in store
     }
   };
 
+  const activeError = localError || error;
+
   return (
-    <LoginCard glass>
+    <RegisterCard glass>
       <div style={{ textAlign: 'center' }}>
         <Heading size="2xl" weight="extrabold" colorVariant="primary">
-          SNACK WORKSPACE
+          TẠO TÀI KHOẢN
         </Heading>
         <Text size="sm" colorVariant="secondary" style={{ marginTop: '0.25rem' }}>
-          Đăng nhập hệ thống quản lý giao tiếp & công việc
+          Đăng ký sử dụng nền tảng Snack Workspace
         </Text>
       </div>
 
-      {error && <ErrorAlert>{error}</ErrorAlert>}
+      {activeError && <ErrorAlert>{activeError}</ErrorAlert>}
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div>
+          <Text size="sm" weight="semibold" style={{ marginBottom: '0.375rem' }}>
+            Tên hiển thị
+          </Text>
+          <Input
+            type="text"
+            placeholder="Nam Luong"
+            value={displayName}
+            onChange={(e) => {
+              clearError();
+              setLocalError(null);
+              setDisplayName(e.target.value);
+            }}
+            required
+          />
+        </div>
+
         <div>
           <Text size="sm" weight="semibold" style={{ marginBottom: '0.375rem' }}>
             Số điện thoại
@@ -76,6 +109,7 @@ export function LoginPage() {
             value={phone}
             onChange={(e) => {
               clearError();
+              setLocalError(null);
               setPhone(e.target.value);
             }}
             required
@@ -84,7 +118,7 @@ export function LoginPage() {
 
         <div>
           <Text size="sm" weight="semibold" style={{ marginBottom: '0.375rem' }}>
-            Mật khẩu
+            Mật khẩu (ít nhất 6 ký tự)
           </Text>
           <Input
             type="password"
@@ -92,7 +126,25 @@ export function LoginPage() {
             value={password}
             onChange={(e) => {
               clearError();
+              setLocalError(null);
               setPassword(e.target.value);
+            }}
+            required
+          />
+        </div>
+
+        <div>
+          <Text size="sm" weight="semibold" style={{ marginBottom: '0.375rem' }}>
+            Xác nhận mật khẩu
+          </Text>
+          <Input
+            type="password"
+            placeholder="••••••••"
+            value={confirmPassword}
+            onChange={(e) => {
+              clearError();
+              setLocalError(null);
+              setConfirmPassword(e.target.value);
             }}
             required
           />
@@ -106,18 +158,18 @@ export function LoginPage() {
           disabled={isLoading}
           style={{ marginTop: '0.5rem' }}
         >
-          {isLoading ? 'Đang xác thực...' : 'Đăng nhập Workspace'}
+          {isLoading ? 'Đang khởi tạo tài khoản...' : 'Đăng ký tài khoản'}
         </Button>
       </form>
 
       <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
         <Text size="sm" colorVariant="secondary">
-          Chưa có tài khoản?
-          <SwitchLink type="button" onClick={() => navigate('/register')}>
-            Đăng ký ngay
+          Đã có tài khoản?
+          <SwitchLink type="button" onClick={() => navigate('/login')}>
+            Đăng nhập ngay
           </SwitchLink>
         </Text>
       </div>
-    </LoginCard>
+    </RegisterCard>
   );
 }
