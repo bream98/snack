@@ -8,8 +8,8 @@ import (
 type Action string
 
 const (
-	SendPeerMessage Action = "send_peer_message"
-	ReceiveMessage  Action = "receive_message"
+	SendPeerMessage    Action = "send_peer_message"
+	SendChannelMessage Action = "send_channel_message"
 )
 
 type MessageEvent struct {
@@ -58,7 +58,7 @@ func ParsePeerPayload(msg []byte) (*PeerMessage, error) {
 
 func validate(msg *ClientMessage) error {
 	switch msg.Action {
-	case SendPeerMessage, ReceiveMessage:
+	case SendPeerMessage, SendChannelMessage:
 		break
 	default:
 		return errors.New("invalid message")

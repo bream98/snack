@@ -24,7 +24,7 @@ func (r *RedisService) Publish(msg *PublishRedisMessage) error {
 	return r.RedisDb.Publish(r.Ctx, WsOutboundChannel, bytes).Err()
 }
 
-func (r *RedisService) ListenOutboundChannel() {
+func (r *RedisService) ListenForMessages() {
 	pubsub := r.RedisDb.Subscribe(r.Ctx, WsOutboundChannel)
 	defer func(pubsub *redis.PubSub) {
 		_ = pubsub.Close()

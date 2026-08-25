@@ -2,14 +2,16 @@ package message
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 )
 
-type ClientProcessor struct {
-	PeerService *PeerService
+type WsReadProcessor struct {
+	PeerService    *PeerService
+	ChannelService *ChannelService
 }
 
-func (c *ClientProcessor) Handle(user *Client, msg []byte) {
+func (c *WsReadProcessor) Handle(user *Client, msg []byte) {
 	clientMsg, err := ParseClientMessage(msg)
 	if err != nil {
 		fmt.Println(err)
@@ -25,8 +27,15 @@ func (c *ClientProcessor) Handle(user *Client, msg []byte) {
 			sendError(user, clientMsg, err)
 			return
 		}
-	case ReceiveMessage:
-
+	case SendChannelMessage:
+		err = c.ChannelService.HandleNewMsg(user, clientMsg)
+		if err != nil {
+			fmt.Println(err)
+			sendError(user, clientMsg, err)
+			return
+		}
+	default:
+		sendError(user, clientMsg, errors.New("invalid action"))
 	}
 
 }

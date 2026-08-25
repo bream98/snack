@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { ChevronDownIcon } from 'lucide-react';
 import { useChannelChatStore } from '../../store/useChannelChatStore';
 import { ChannelEditModal } from '../channel/ChannelEditModal';
+import MessageInput from "../../components/message/MessageInput.tsx";
 
 export function ChannelMessagePage() {
   const { channelId } = useParams<{ channelId: string }>();
@@ -40,6 +41,8 @@ export function ChannelMessagePage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
+
+        <MessageInput message="" setMessage={() => {}} send={() => {}} />
     </PageContainer>
   );
 }

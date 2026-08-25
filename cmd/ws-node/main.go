@@ -73,9 +73,13 @@ func main() {
 	manager := ws.NewManager()
 	go manager.Run()
 
-	// 4. Subscribe to Redis PubSub (Listen for responses from Workers)
-	redisService := &ws.RedisService{RedisDb: rdb, Ctx: ctx, Manager: manager}
-	go redisService.ListenOutboundChannel()
+	// 4. Subscribe to Redis PubSub for peer chat
+	peerRedisPubsub := &ws.RedisService{RedisDb: rdb, Ctx: ctx, Manager: manager}
+	go peerRedisPubsub.ListenForMessages()
+
+	// Subscribe to Redis PubSub for channel chat
+	channelRedisPubsub := &ws.ChannelPubsub{Rdb: rdb, Ctx: ctx}
+	go channelRedisPubsub.ListenForMessages()
 
 	// Create object to handle WebSocket connections
 	userRepo := &repo.UserRepo{Db: gormDB}
@@ -84,19 +88,24 @@ func main() {
 		Db:                gormDB,
 		UserRepo:          userRepo,
 		DirectChannelRepo: directChannelRepo,
-		RedisService:      redisService,
+		RedisService:      peerRedisPubsub,
 	}
-	clientProcessor := &ws.ClientProcessor{PeerService: peerService}
+
+	// Create channel service
+	channelService := &ws.ChannelService{}
+
+	// WebSocket Read Processor to handle incoming messages
+	wsReadProcessor := &ws.WsReadProcessor{PeerService: peerService, ChannelService: channelService}
 
 	// WebSocket Endpoint with Subprotocol Auth Support
 	r.GET("/ws", func(c *gin.Context) {
+		// Check jwt token
 		authClaims, err := ws.CheckToken(c)
 		if err != nil {
 			log.Printf("[%s] WS Auth failed: %v", nodeID, err)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			return
 		}
-
 		responseHeader := make(http.Header)
 		if sub := c.Request.Header.Get("Sec-WebSocket-Protocol"); sub != "" {
 			parts := strings.Split(sub, ",")
@@ -105,12 +114,14 @@ func main() {
 			}
 		}
 
+		// Upgrade to WebSocket protocol
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, responseHeader)
 		if err != nil {
 			log.Printf("[%s] WS Upgrade error: %v", nodeID, err)
 			return
 		}
 
+		// Create new client for manager
 		client, err := ws.NewUser(conn, authClaims.UserID)
 		if err != nil {
 			_ = conn.Close()
@@ -118,7 +129,8 @@ func main() {
 		}
 		manager.Register <- client
 
-		go readPump(ctx, client, manager, clientProcessor)
+		// Start goroutines for handling messages
+		go readPump(ctx, client, manager, wsReadProcessor)
 		go writePump(client, manager)
 	})
 
@@ -129,7 +141,7 @@ func readPump(
 	ctx context.Context,
 	user *ws.Client,
 	manager *ws.Manager,
-	clientProcessor *ws.ClientProcessor,
+	wsReadProcessor *ws.WsReadProcessor,
 ) {
 	defer func() {
 		log.Printf("Client disconnected")
@@ -149,7 +161,7 @@ func readPump(
 			return
 		}
 
-		clientProcessor.Handle(user, p)
+		wsReadProcessor.Handle(user, p)
 	}
 }
 

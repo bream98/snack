@@ -104,7 +104,7 @@ func (m *Manager) Run() {
 func (m *Manager) GetClientByUserid(id uint) map[string]*Client {
 	if clients, ok := m.Users[id]; ok {
 		return clients
-	} else {
-		return make(map[string]*Client)
 	}
+
+	return make(map[string]*Client)
 }
