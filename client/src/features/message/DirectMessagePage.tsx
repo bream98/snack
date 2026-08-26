@@ -100,5 +100,6 @@ const ListMessages = styled.div`
   flex: 1;
   overflow-y: auto;
   padding: 1rem;
+  display: flex;
   flex-direction: column-reverse;
 `;

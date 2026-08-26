@@ -85,7 +85,7 @@ export const useChatStore = create<ChatState>((set) => ({
           newIdsSet.add(msg.ID);
         });
 
-        const sortedIds = Array.from(newIdsSet).sort((a, b) => a - b);
+        const sortedIds = Array.from(newIdsSet).sort((a, b) => b - a);
 
         return {
           messages: {
@@ -112,7 +112,7 @@ export const useChatStore = create<ChatState>((set) => ({
 
       const updatedIds = channelMsgState.messageIds.includes(message.ID)
         ? channelMsgState.messageIds
-        : [...channelMsgState.messageIds, message.ID];
+        : [message.ID, ...channelMsgState.messageIds];
 
       const updatedMap = {
         ...channelMsgState.messageMap,
