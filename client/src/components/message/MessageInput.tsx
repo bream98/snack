@@ -1,5 +1,8 @@
+import { useState, useRef } from "react";
+import { useClickAway } from "react-use";
+import EmojiPicker from "emoji-picker-react";
 import { Button } from "../../design-system";
-import { SendIcon } from "lucide-react";
+import { SendIcon, Smile } from "lucide-react";
 import styled from "styled-components";
 import React from "react";
 
@@ -10,8 +13,14 @@ type Props = {
 };
 
 export default function MessageInput({ message, setMessage, send }: Props) {
+  const [showPicker, setShowPicker] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useClickAway(pickerRef, () => {
+    setShowPicker(false);
+  });
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Nếu bấm Enter mà KHÔNG giữ Shift -> Gửi tin nhắn và chặn xuống dòng mặc định
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       send();
@@ -19,14 +28,25 @@ export default function MessageInput({ message, setMessage, send }: Props) {
   };
 
   return (
-    <SendMessageInput>
+    <SendMessageInput ref={pickerRef}>
+      {showPicker && (
+        <PickerWrapper>
+          <EmojiPicker onEmojiClick={(e) => setMessage(message + e.emoji)} />
+        </PickerWrapper>
+      )}
+
+      <IconButton onClick={() => setShowPicker(!showPicker)} type="button">
+        <Smile size={22} />
+      </IconButton>
+
       <ChatInput
         placeholder="Gửi tin nhắn..."
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={handleKeyDown}
       />
-      <Button onClick={send}>
+
+      <Button onClick={send} style={{ padding: "12px" }}>
         <SendIcon />
       </Button>
     </SendMessageInput>
@@ -36,12 +56,35 @@ export default function MessageInput({ message, setMessage, send }: Props) {
 const SendMessageInput = styled.div`
   display: flex;
   gap: 10px;
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   padding: 16px 24px;
   background-color: white;
+  align-items: center;
+`;
+
+const PickerWrapper = styled.div`
+  position: absolute;
+  bottom: 75px;
+  left: 24px;
+  z-index: 50;
+`;
+
+const IconButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  color: #5f6368;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: #f1f3f4;
+    color: #1a73e8;
+  }
 `;
 
 const ChatInput = styled.textarea`
@@ -49,7 +92,7 @@ const ChatInput = styled.textarea`
   border-radius: 8px;
   padding: 10px 20px;
   font-size: 16px;
-  font-family: inherit; 
+  font-family: inherit;
   border: 1px solid #ccc;
   resize: none;
 
