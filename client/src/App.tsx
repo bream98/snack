@@ -15,6 +15,7 @@ import { ChannelMessagePage } from './features/message/ChannelMessagePage';
 import { DirectMessagePage } from './features/message/DirectMessagePage';
 import { Test } from './features/test/Test';
 import { ToastContainer } from './components/common/Toast';
+import { WebSocketListener } from './components/common/WebSocketListener';
 
 export function App() {
   const { isAuthenticated, fetchMe } = useAuthStore();
@@ -29,62 +30,64 @@ export function App() {
     <ThemeProvider theme={currentTheme}>
       <GlobalStyle />
       <ToastContainer />
-      <Routes>
-        {/* Auth Routes */}
-        <Route
-          path="/login"
-          element={
-            !isAuthenticated ? (
-              <AuthLayout>
-                <LoginPage />
-              </AuthLayout>
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
+      <WebSocketListener>
+        <Routes>
+          {/* Auth Routes */}
+          <Route
+            path="/login"
+            element={
+              !isAuthenticated ? (
+                <AuthLayout>
+                  <LoginPage />
+                </AuthLayout>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
 
-        <Route
-          path="/register"
-          element={
-            !isAuthenticated ? (
-              <AuthLayout>
-                <RegisterPage />
-              </AuthLayout>
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
+          <Route
+            path="/register"
+            element={
+              !isAuthenticated ? (
+                <AuthLayout>
+                  <RegisterPage />
+                </AuthLayout>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
 
-        {/* Home Route with Child Routes inside Dashboard Section */}
-        <Route
-          path="/"
-          element={
-            isAuthenticated ? (
-              <HomePage />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<Navigate to="/" replace />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="channels/new" element={<NewChannelPage />} />
-          <Route path="direct-message/:toId" element={<DirectMessagePage />} />
-          <Route path="channel_message/:channelId" element={<ChannelMessagePage />} />
-        </Route>
+          {/* Home Route with Child Routes inside Dashboard Section */}
+          <Route
+            path="/"
+            element={
+              isAuthenticated ? (
+                <HomePage />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          >
+            <Route index element={<Navigate to="/" replace />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="channels/new" element={<NewChannelPage />} />
+            <Route path="direct-message/:toId" element={<DirectMessagePage />} />
+            <Route path="channel_message/:channelId" element={<ChannelMessagePage />} />
+          </Route>
 
-        {/* Test Route */}
-        <Route path="/test" element={<Test />} />
-        <Route path="/test/:toId" element={<Test />} />
+          {/* Test Route */}
+          <Route path="/test" element={<Test />} />
+          <Route path="/test/:toId" element={<Test />} />
 
-        {/* Catch-all Redirect */}
-        <Route
-          path="*"
-          element={<Navigate to={isAuthenticated ? '/' : '/login'} replace />}
-        />
-      </Routes>
+          {/* Catch-all Redirect */}
+          <Route
+            path="*"
+            element={<Navigate to={isAuthenticated ? '/' : '/login'} replace />}
+          />
+        </Routes>
+      </WebSocketListener>
     </ThemeProvider>
   );
 }

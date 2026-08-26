@@ -1,39 +1,24 @@
-
-
-import { useEffect, useRef, useState } from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import styled from 'styled-components';
-import {toast} from "../../components/common/Toast.tsx";
-import {useParams, useSearchParams} from "react-router-dom";
-import {type DirectMessageDB, useDirectChatStore} from "../../store/useDirectChatStore.ts";
+import { toast } from "../../components/common/Toast.tsx";
+import { useParams, useSearchParams } from "react-router-dom";
 import MessageInput from "../../components/message/MessageInput.tsx";
-import {MessageElement} from "../../components/message/MessageElement.tsx";
+import { MessageElement } from "../../components/message/MessageElement.tsx";
+import {useChatStore} from "../../store/useChatStore.tsx";
+import {wsService} from "../../services/wsService.ts";
 
 type PeerMsgPayload = {
   to: number,
   msg: string,
 }
 
-type Message<T> = {
-  trace_id : string,
-  action : string,
-  payload: T
-}
 
-type ErrorPayload = {
-  msg: string,
-}
 
-type ServerMessage<T> = {
-  trace_id : string,
-  action : string,
-  payload: T
-}
 
 export const DirectMessagePage = () => {
   const [message, setMessage] = useState('');
-  const wsRef = useRef<WebSocket | null>(null);
-  const [messages, setMessages] = useState<DirectMessageDB[]>([]);
-  const [isDisconnected, setIsDisconnected] = useState<boolean>(false);
+  const { messages, fetchHistoricalMessages} = useChatStore()
+
 
   // peer user id
   const params = useParams()
@@ -44,119 +29,76 @@ export const DirectMessagePage = () => {
   const channelIdStr = searchParams.get('channelId');
   const channelId = channelIdStr ? Number(channelIdStr) : null;
 
-  const { fetchDirectMessages, directMessagesByChannel } = useDirectChatStore()
-
-  useEffect(() => {
-    if (wsRef.current) return;
-
-    // Subprotocol Method (Pass token as second argument)
-    const token = localStorage.getItem('token') || '';
-    const ws = new WebSocket('ws://localhost/ws', ['access_token', token]);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      console.log('Connected to Proxy with Subprotocol!');
-      setIsDisconnected(false);
-      // ws.send('Welcome Server');
-    };
-
-    ws.onmessage = (event) => {
-      let data: ServerMessage<any>;
-      try {
-        data = JSON.parse(event.data);
-      } catch (error) {
-        console.error('Invalid JSON:', event.data);
-        return;
-      }
-
-      if (data.action === 'ws_error') {
-        const errorPayload = data.payload as ErrorPayload;
-        toast.error(errorPayload.msg);
-      } else if (data.action === 'new_message_response') {
-        const newMessage = data.payload as DirectMessageDB;
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
-      }
-    };
-
-    ws.onerror = () => {
-      setIsDisconnected(true);
-    }
-
-    ws.onclose = () => {
-      setIsDisconnected(true);
-    }
-
-    return () => {
-      ws.close();
-      wsRef.current = null;
-    };
-  }, []);
 
   useEffect(() => {
     if (!channelId) return;
-    fetchDirectMessages(channelId).catch(console.error);
+    fetchHistoricalMessages(channelId).catch(console.log)
   }, [channelId]);
-
-  useEffect(() => {
-    if (!channelId) return
-    setMessages(directMessagesByChannel[channelId] || [])
-  }, [directMessagesByChannel]);
 
   const send = () => {
     if (!message.trim() || !toId || isNaN(toId)) {
       toast.error("Invalid config")
       return;
     }
-    const msg: Message<PeerMsgPayload> = {
-      trace_id: '1234567890',
-      action: 'send_peer_message',
-      payload: {
-        to: toId,
-        msg: message,
-      }
-    }
-    wsRef.current?.send(JSON.stringify(msg));
-    setMessage('');
+
+    wsService.send("send_peer_message", {
+      to: toId,
+      msg: message,
+    } as PeerMsgPayload)
+
     setMessage('');
   };
 
+  const channelMessageData = useMemo(() => {
+      return !channelId  || !messages[channelId] ? {
+        messageIds: [],
+        messageMap: {}
+      } : messages[channelId]
+  }, [messages, channelId])
+
+
+
   return (
-      <Container>
-        <h1>Send Message to WS</h1>
-        {isDisconnected && <Alert>Mất kết nôi</Alert>}
+    <Container>
+      <Header>Send Message to WS</Header>
 
-        <ListMessages>
-          {messages.map((msg, _) => (
-            <MessageElement msg={msg} key={msg.ID} />
-          ))}
-        </ListMessages>
+      <ListMessages>
+        {channelMessageData.messageIds.map((id, _) => {
+          return <MessageElement msg={channelMessageData.messageMap[id]} key={id} />
+        })}
+      </ListMessages>
 
-          <MessageInput
-              message={message}
-              setMessage={(msg) => setMessage(msg)}
-              send={send}
-          />
-
-      </Container>
+      <MessageInput
+        message={message}
+        setMessage={(msg) => setMessage(msg)}
+        send={send}
+      />
+    </Container>
   );
 };
 
 const Container = styled.div`
-  position: relative;
+  display: flex;
+  flex-direction: column;
   height: 100%;
-  overflow-y: auto;
   box-sizing: border-box;
+  overflow: hidden;
+`;
+
+const Header = styled.h1`
+  flex-shrink: 0;
+  margin: 0;
+  padding: 1rem 1.25rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  background-color: ${({ theme }) => theme.colors?.surface || '#ffffff'};
+  border-bottom: 1px solid ${({ theme }) => theme.colors?.border || '#e0e0e0'};
+  z-index: 10;
 `;
 
 const ListMessages = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  flex-direction: column-reverse;
 `;
-
-
-
-const Alert = styled.div`
-    background-color: #f44336;
-    color: white;
-    padding: 10px;
-`
-
-
