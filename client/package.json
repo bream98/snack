@@ -19,6 +19,7 @@
     "react-dom": "^19.2.8",
     "react-nice-avatar": "^1.5.0",
     "react-router-dom": "^7.18.2",
+    "react-use": "^17.6.1",
     "styled-components": "^6.4.4",
     "zustand": "^5.0.14"
   },

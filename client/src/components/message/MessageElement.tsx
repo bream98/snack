@@ -21,7 +21,7 @@ export const MessageElement = ({ msg }: Props) => {
       </AvatarSquare>
       <div>
         <Sender>{msg.user?.display_name}</Sender>
-        <div>{msg.value}</div>
+        <MessageText>{msg.value}</MessageText>
         <small>{new Date(msg.CreatedAt).toLocaleTimeString()}</small>
       </div>
     </MessageElementInner>
@@ -56,4 +56,9 @@ const MessageElementInner = styled.div`
 const Sender = styled.div`
   font-weight: 500;
   font-size: 1rem;
+`;
+
+const MessageText = styled.div`
+  white-space: pre-wrap;
+  word-break: break-word;
 `;

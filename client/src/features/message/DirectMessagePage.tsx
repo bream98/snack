@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import styled from 'styled-components';
 import { toast } from "../../components/common/Toast.tsx";
 import { useParams, useSearchParams } from "react-router-dom";
@@ -6,6 +6,7 @@ import MessageInput from "../../components/message/MessageInput.tsx";
 import { MessageElement } from "../../components/message/MessageElement.tsx";
 import {useChatStore} from "../../store/useChatStore.tsx";
 import {wsService} from "../../services/wsService.ts";
+import {useScroll} from "react-use";
 
 type PeerMsgPayload = {
   to: number,
@@ -18,6 +19,9 @@ type PeerMsgPayload = {
 export const DirectMessagePage = () => {
   const [message, setMessage] = useState('');
   const { messages, fetchHistoricalMessages} = useChatStore()
+  const scrollRef = useRef(null);
+  // @ts-ignore
+  const {x, y} = useScroll(scrollRef);
 
 
   // peer user id
@@ -28,6 +32,7 @@ export const DirectMessagePage = () => {
   const [searchParams] = useSearchParams();
   const channelIdStr = searchParams.get('channelId');
   const channelId = channelIdStr ? Number(channelIdStr) : null;
+
 
 
   useEffect(() => {
@@ -60,7 +65,13 @@ export const DirectMessagePage = () => {
 
   return (
     <Container>
-      <Header>Send Message to WS</Header>
+      <Header>Send Message to WS
+        <div ref={scrollRef}>
+          <div>x: {x}</div>
+          <div>y: {y}</div>
+        </div>
+
+      </Header>
 
       <ListMessages>
         {channelMessageData.messageIds.map((id, _) => {
