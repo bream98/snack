@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"snack/internal/repo"
 	"snack/internal/rest_api"
+	"strconv"
 	"strings"
 	"time"
 
@@ -78,7 +78,11 @@ func main() {
 	go peerRedisPubsub.ListenForMessages()
 
 	// Subscribe to Redis PubSub for channel chat
-	channelRedisPubsub := &ws.ChannelPubsub{Rdb: rdb, Ctx: ctx}
+	channelRedisPubsub := &ws.ChannelPubsub{
+		Rdb:     rdb,
+		Ctx:     ctx,
+		Manager: manager,
+	}
 	go channelRedisPubsub.ListenForMessages()
 
 	// Create object to handle WebSocket connections
@@ -92,7 +96,12 @@ func main() {
 	}
 
 	// Create channel service
-	channelService := &ws.ChannelService{}
+	channelRepo := &repo.ChannelRepo{Db: gormDB}
+	channelService := &ws.ChannelService{
+		ChannelPubsub: channelRedisPubsub,
+		ChannelRepo:   channelRepo,
+		UserRepo:      userRepo,
+	}
 
 	// WebSocket Read Processor to handle incoming messages
 	wsReadProcessor := &ws.WsReadProcessor{PeerService: peerService, ChannelService: channelService}
@@ -128,6 +137,17 @@ func main() {
 			return
 		}
 		manager.Register <- client
+
+		// TEST PUB/SUP PATTERN
+		allChannelUserInterested, err := channelRepo.GetAllChannelIdByUserId(client.UserId)
+		if err != nil {
+			log.Println(err)
+			_ = conn.Close()
+			return
+		}
+		for _, channelId := range allChannelUserInterested {
+			manager.JoinTopic("channel:"+strconv.Itoa(int(channelId)), client)
+		}
 
 		// Start goroutines for handling messages
 		go readPump(ctx, client, manager, wsReadProcessor)
@@ -173,21 +193,16 @@ func writePump(user *ws.Client, manager *ws.Manager) {
 		_ = user.Conn.Close()
 	}()
 
-	greater := fmt.Sprintf("Welcome Client %s", user.ClientID)
-	err := user.Conn.WriteMessage(websocket.TextMessage, []byte(greater))
-	if err != nil {
-		return
-	}
-
 	for {
 		select {
+		// Send msg back to client
 		case p := <-user.Send:
-			fmt.Printf("Sending message: %s\n", p)
 			err := user.Conn.WriteMessage(websocket.TextMessage, p)
 			if err != nil {
 				return
 			}
 
+		// Send ping frame to client to keep connection
 		case <-ticker.C:
 			err := user.Conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(ConnectionDeadline))
 			if err != nil {

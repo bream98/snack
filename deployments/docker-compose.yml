@@ -16,12 +16,17 @@ services:
     build:
       context: ..
       dockerfile_inline: |
-        FROM golang:1.22-alpine
+        FROM golang:alpine AS builder
         WORKDIR /app
         ENV GOTOOLCHAIN=auto
+        COPY go.mod go.sum ./
+        RUN go mod download
         COPY . .
-        RUN go mod tidy
-        RUN go build -o /ws-node cmd/ws-node/main.go
+        RUN CGO_ENABLED=0 go build -o /ws-node cmd/ws-node/main.go
+
+        FROM alpine:latest
+        WORKDIR /app
+        COPY --from=builder /ws-node /ws-node
         CMD ["/ws-node"]
     restart: unless-stopped
     environment:
@@ -44,12 +49,17 @@ services:
     build:
       context: ..
       dockerfile_inline: |
-        FROM golang:1.22-alpine
+        FROM golang:alpine AS builder
         WORKDIR /app
         ENV GOTOOLCHAIN=auto
+        COPY go.mod go.sum ./
+        RUN go mod download
         COPY . .
-        RUN go mod tidy
-        RUN go build -o /ws-node cmd/ws-node/main.go
+        RUN CGO_ENABLED=0 go build -o /ws-node cmd/ws-node/main.go
+
+        FROM alpine:latest
+        WORKDIR /app
+        COPY --from=builder /ws-node /ws-node
         CMD ["/ws-node"]
     restart: unless-stopped
     environment:
@@ -112,12 +122,17 @@ services:
     build:
       context: ..
       dockerfile_inline: |
-        FROM golang:1.22-alpine
+        FROM golang:alpine AS builder
         WORKDIR /app
         ENV GOTOOLCHAIN=auto
+        COPY go.mod go.sum ./
+        RUN go mod download
         COPY . .
-        RUN go mod tidy
-        RUN go build -o /worker cmd/worker/main.go
+        RUN CGO_ENABLED=0 go build -o /worker cmd/worker/main.go
+
+        FROM alpine:latest
+        WORKDIR /app
+        COPY --from=builder /worker /worker
         CMD ["/worker"]
     restart: unless-stopped
     environment:
@@ -132,3 +147,5 @@ services:
         condition: service_started
       postgres:
         condition: service_healthy
+
+

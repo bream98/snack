@@ -47,9 +47,9 @@ Websocket thiết lập một kết nối 2 chiều giữa Server và Client. Se
 
 => Dùng heartbeat để xác nhận. Mỗi 10s Server gửi 1 message về Client và Client sẽ phản hồi lại. Nếu sau 10s Server không nhận được phản hồi từ Client, Server có thể coi rằng Client đã disconnect và thực hiện xóa Connection đang lưu trên Server. Ngược lại, Client nếu sau một khoảng thời gian không nhận được tín hiệu từ Server sẽ xóa kết nối hiện tại và thực hiện Retry.
 
-Vì một user có thể đăng nhập trên nhiều thiết bị nên User này cũng có nhiều kết nối tới Server. Trường hợp Client thực hiện Retry và có Message mới tới, khi Retry thành công Client cần thực hiện Sync Message từ last_message_id.
+Vì một user có thể đăng nhập trên nhiều thiết bị nên User này cũng có nhiều kết nối tới Server. Trường hợp Client thực hiện Retry và có MessageElement mới tới, khi Retry thành công Client cần thực hiện Sync MessageElement từ last_message_id.
 
-## Message
+## MessageElement
 
 User gửi 1 message vào WS Gateway.
 
@@ -62,28 +62,28 @@ Trường hợp không thành công thì trả message lỗi 401: Not member ho�
 
 Lưu message vào DB.
 
-Kiểm tra Redis trạng thái Presence của User. Nếu User Online, gửi Message cho User thông qua kết nối WS.
+Kiểm tra Redis trạng thái Presence của User. Nếu User Online, gửi MessageElement cho User thông qua kết nối WS.
 
 - Lấy danh sách tất cả Member trong Cache, nếu trong Cache chưa tồn tại thì query DB rồi lưu vào Cache
 - Đi qua từng member trong CM hoặc Receiver trong DM
 - Nếu trạng thái đang Online, tìm WS Gateway của Member đó và bắn Event qua Redis Pub/Sub
-- WS Gateway nhận Message mới với User và gửi về Client qua connection của User đó
+- WS Gateway nhận MessageElement mới với User và gửi về Client qua connection của User đó
 
-Message được gửi cho Worker để xử lý.
+MessageElement được gửi cho Worker để xử lý.
 
 ## Read & Unread status
 
 Cách xử lý thứ nhất là trạng thái đi theo message. Với Channel có 1k Member, 1 message mới sẽ sinh ra 1k status.
 
-Ưu điểm của cách này là có thể theo dõi chính xác Message nào User đã xem và Message nào User chưa xem. Nhưng số Status mới tỉ lệ thuận với số lượng Message trong Channel, với công thức:
+Ưu điểm của cách này là có thể theo dõi chính xác MessageElement nào User đã xem và MessageElement nào User chưa xem. Nhưng số Status mới tỉ lệ thuận với số lượng MessageElement trong Channel, với công thức:
 
-`Status = N (Message) * M (Member)`
+`Status = N (MessageElement) * M (Member)`
 
-Cách xử lý thứ 2 là trạng thái đi theo Channel. Với cách này, số lượng Status của Channel = M (Member). User được theo dõi là đã đọc tới Message nào. Nếu có Message tới sau Message User đã đọc thì được coi là Message mới.
+Cách xử lý thứ 2 là trạng thái đi theo Channel. Với cách này, số lượng Status của Channel = M (Member). User được theo dõi là đã đọc tới MessageElement nào. Nếu có MessageElement tới sau MessageElement User đã đọc thì được coi là MessageElement mới.
 
 ## Reaction
 
-Reaction sẽ đi theo Message. Và mỗi Member sẽ được lưu trạng thái Reaction riêng so với Member khác. Tất cả các Reaction sẽ được đưa vào Kafka và xử lý theo lô mỗi 0.1ms để lưu vào DB.
+Reaction sẽ đi theo MessageElement. Và mỗi Member sẽ được lưu trạng thái Reaction riêng so với Member khác. Tất cả các Reaction sẽ được đưa vào Kafka và xử lý theo lô mỗi 0.1ms để lưu vào DB.
 
 Vì khi Member react một tin nhắn nhưng Member khác đang Online cũng nhìn thấy, nên Reaction cũng được coi là 1 message và được gửi tới Member khác qua kết nối WS.
 
@@ -91,9 +91,9 @@ Phía người ấn Reaction nhận được thông báo thành công, tức là
 
 ## Tag
 
-Message được đưa vào Kafka để phân tích tag.
+MessageElement được đưa vào Kafka để phân tích tag.
 
-Nếu phát hiện Tag trong Message, sẽ tạo Activity thông báo cho User khác.
+Nếu phát hiện Tag trong MessageElement, sẽ tạo Activity thông báo cho User khác.
 
 ## Presence
 
@@ -119,7 +119,7 @@ Khi Member thêm / xóa Member, cần Invalidate cache.
 ### DB
 
 - DB Read: lấy dữ liệu Member của Channel
-- DB Write: ghi Message
+- DB Write: ghi MessageElement
 
 ### WS Gateway
 

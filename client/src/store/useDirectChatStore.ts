@@ -45,7 +45,7 @@ export interface DirectChannelItem {
 interface ChatState {
   /* directChannels: Item = Channel DB + Metadata */
   directChannels: DirectChannelItem[];
-  /* directMessagesByChannel: Item = Database Message (DirectMessageDB) */
+  /* directMessagesByChannel: Item = Database MessageElement (DirectMessageDB) */
   directMessagesByChannel: Record<number, DirectMessageDB[]>;
   activeChannelId: number | null;
   isLoadingChannels: boolean;
@@ -127,7 +127,7 @@ export const useDirectChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  /* Thêm trực tiếp Database Message vào channelId tương ứng */
+  /* Thêm trực tiếp Database MessageElement vào channelId tương ứng */
   appendDirectMessage: (channelId, dbMsg) => {
     set((state) => {
       const currentList = state.directMessagesByChannel[channelId] || [];

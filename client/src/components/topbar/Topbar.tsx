@@ -1,8 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { LogOut } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
-import { Button, Text } from '../../design-system';
+import { Text } from '../../design-system';
 
 const TopbarContainer = styled.div`
   width: 100%;
@@ -35,20 +34,20 @@ const UserProfileChip = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 4px 10px;
+  padding: 6px 14px;
   border-radius: ${({ theme }) => theme.radii.pill};
   background-color: ${({ theme }) => theme.colors.background};
-`;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
 
+  &:hover {
+    opacity: 0.85;
+  }
+`;
 
 export function Topbar() {
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const { user } = useAuthStore();
 
   const displayName = user?.display_name || 'Người dùng';
 
@@ -59,21 +58,13 @@ export function Topbar() {
         FlyTalk
       </Brand>
 
-      {/* User Info & Logout Button */}
+      {/* User Info Chip -> Navigates to /profile */}
       <UserGroup>
-        <UserProfileChip>
+        <UserProfileChip onClick={() => navigate('/profile')}>
           <Text size="sm" weight="semibold">
             {displayName}
           </Text>
         </UserProfileChip>
-
-        <Button
-          size="sm"
-          onClick={handleLogout}
-        >
-          <LogOut size={15} />
-          <span>Đăng xuất</span>
-        </Button>
       </UserGroup>
     </TopbarContainer>
   );

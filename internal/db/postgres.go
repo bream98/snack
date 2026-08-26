@@ -24,11 +24,9 @@ func InitDB(dsn string) (*gorm.DB, error) {
 		sqlDB.SetConnMaxLifetime(time.Hour)
 	}
 
-	// Acquire PostgreSQL Advisory Lock to prevent migration race conditions across multiple nodes
+	// Acquire PostgreSQL Advisory Lock and ensure unlock on function exit
 	db.Exec("SELECT pg_advisory_lock(999999)")
-	// Drop old single-column unique index if it exists
-	_ = db.Migrator().DropIndex(&domain.ChannelMember{}, "idx_channel_members_user_id")
-	_ = db.Migrator().DropIndex(&domain.DirectMember{}, "idx_direct_members_user_id")
+	defer db.Exec("SELECT pg_advisory_unlock(999999)")
 
 	// Auto migrate schema
 	err = db.AutoMigrate(

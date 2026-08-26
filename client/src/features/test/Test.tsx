@@ -5,10 +5,10 @@ import {toast} from "../../components/common/Toast.tsx";
 import {useParams} from "react-router-dom";
 import { SendIcon } from "lucide-react";
 
-type PeerMsgPayload = {
-  to: number,
-  msg: string,
-}
+// type PeerMsgPayload = {
+//   to: number,
+//   msg: string,
+// }
 
 type Message<T> = {
   trace_id : string,
@@ -32,6 +32,11 @@ type ServerMessage<T> = {
   trace_id : string,
   action : string,
   payload: T
+}
+
+type ChannelMsgPayload = {
+  channel_id: number,
+  msg: string,
 }
 
 export const Test = () => {
@@ -69,7 +74,7 @@ export const Test = () => {
       if (data.action === 'ws_error') {
         const errorPayload = data.payload as ErrorPayload;
         toast.error(errorPayload.msg);
-      } else if (data.action === 'new_message_response') {
+      } else if (data.action === 'new_channel_message_response') {
         const newMessage = data.payload as NewMessage;
         setMessages((prevMessages) => [...prevMessages, newMessage]);
       }
@@ -94,11 +99,11 @@ export const Test = () => {
       toast.error("Invalid config")
       return;
     }
-    const msg: Message<PeerMsgPayload> = {
+    const msg: Message<ChannelMsgPayload> = {
       trace_id: '1234567890',
-      action: 'send_peer_message',
+      action: 'send_channel_message',
       payload: {
-        to: toId,
+        channel_id: 1,
         msg: message,
       }
     }

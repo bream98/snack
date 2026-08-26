@@ -34,7 +34,7 @@ const SendMessageInput = styled.div`
   right: 0;
   
   padding: 16px 24px;
-  background-color: lightsteelblue;
+  background-color: white;
 `;
 
 

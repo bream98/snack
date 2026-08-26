@@ -41,7 +41,7 @@ Root (/)
         ├── 💬 Channel Chat Screen (/app/channels/:channelId)
         │   └── Tích hợp bảng Kanban rút gọn góc phải (Quick Task Panel)
         │
-        ├── 👤 Direct Message Screen (/app/dm/:userId)
+        ├── 👤 Direct MessageElement Screen (/app/dm/:userId)
         └── ⚙️ Settings (/app/settings)
 ```
 
@@ -108,6 +108,6 @@ client/src/
 ## 4. Các bước Triển khai Dự kiến (Execution Roadmap)
 
 1. **Bước 1:** Khởi tạo `useAuthStore` & màn hình Auth (`Login`, `Register`, `Logout`).
-2. **Bước 2:** Xây dựng khung `DashboardLayout` gồm `Topbar` & `Sidebar` (phân chia khu vực CM - Channel Message & DM - Direct Message).
+2. **Bước 2:** Xây dựng khung `DashboardLayout` gồm `Topbar` & `Sidebar` (phân chia khu vực CM - Channel MessageElement & DM - Direct MessageElement).
 3. **Bước 3:** Khởi tạo `useKanbanStore` & dựng giao diện **Kanban Board** (Các cột Backlog, To Do, In Progress, Done & Thẻ công việc).
 4. **Bước 4:** Tích hợp chuyển đổi luồng màn hình mượt mà và kiểm thử build ứng dụng.

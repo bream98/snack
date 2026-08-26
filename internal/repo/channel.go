@@ -58,3 +58,21 @@ func (r *ChannelRepo) GetMembers(channelId uint) ([]*domain.User, error) {
 		Find(&users).Error
 	return users, err
 }
+
+func (r *ChannelRepo) CheckMember(channelId, memberId uint) bool {
+	member := &domain.ChannelMember{}
+	err := r.Db.Where("channel_id = ? AND user_id = ?", channelId, memberId).First(member).Error
+	return err == nil && member.ID != 0
+}
+
+func (r *ChannelRepo) CreateMessage(msg *domain.ChannelMessage) error {
+	return r.Db.Create(msg).Error
+}
+
+func (r *ChannelRepo) GetAllChannelIdByUserId(userId uint) ([]uint, error) {
+	var channelIDs []uint
+	err := r.Db.Model(&domain.ChannelMember{}).
+		Where("user_id = ?", userId).
+		Pluck("channel_id", &channelIDs).Error
+	return channelIDs, err
+}

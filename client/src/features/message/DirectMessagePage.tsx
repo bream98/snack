@@ -6,6 +6,7 @@ import {toast} from "../../components/common/Toast.tsx";
 import {useParams, useSearchParams} from "react-router-dom";
 import {type DirectMessageDB, useDirectChatStore} from "../../store/useDirectChatStore.ts";
 import MessageInput from "../../components/message/MessageInput.tsx";
+import {MessageElement} from "../../components/message/MessageElement.tsx";
 
 type PeerMsgPayload = {
   to: number,
@@ -126,11 +127,7 @@ export const DirectMessagePage = () => {
 
         <ListMessages>
           {messages.map((msg, _) => (
-              <MessageElement key={msg.ID}>
-                <Sender>{msg.user?.display_name}</Sender>
-                <div>{msg.value}</div>
-                <small>{new Date(msg.CreatedAt).toLocaleTimeString()}</small>
-              </MessageElement>
+            <MessageElement msg={msg} key={msg.ID} />
           ))}
         </ListMessages>
 
@@ -162,24 +159,4 @@ const Alert = styled.div`
     padding: 10px;
 `
 
-const MessageElement = styled.div`
-  margin: 10px 0;
-  padding: 10px;
-  &:hover {
-    background-color: #f0f0f0;
-  }
-
-  font-size: 1.2rem;
-  
-  
-  
-  small {
-    font-size: 0.8rem;
-  }
-`
-
-const Sender = styled.div`
-  font-weight: 500;
-  font-size: 1rem;
-`
 

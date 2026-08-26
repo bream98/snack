@@ -69,3 +69,18 @@ func validate(msg *ClientMessage) error {
 	}
 	return nil
 }
+
+type ChannelMessage struct {
+	ChannelId uint   `json:"channel_id"`
+	Msg       string `json:"msg"`
+}
+
+func ParseChannelPayload(msg []byte) (*ChannelMessage, error) {
+	var channelMsg ChannelMessage
+	err := json.Unmarshal(msg, &channelMsg)
+	errObj := errors.New("invalid payload")
+	if err != nil || channelMsg.ChannelId == 0 || channelMsg.Msg == "" {
+		return nil, errObj
+	}
+	return &channelMsg, nil
+}

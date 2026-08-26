@@ -12,12 +12,13 @@ import (
 const Prefix = "channel:"
 
 type ChannelPubsub struct {
-	Rdb *redis.Client
-	Ctx context.Context
+	Rdb     *redis.Client
+	Ctx     context.Context
+	Manager *Manager
 }
 
 // Publish publishes a message to redis
-func (r *ChannelPubsub) Publish(channelId uint, msg *ClientMessage) error {
+func (r *ChannelPubsub) Publish(channelId uint, msg interface{}) error {
 	bytes, err := json.Marshal(msg)
 	if err != nil {
 		return errors.New("failed to marshal channel message")
@@ -26,11 +27,10 @@ func (r *ChannelPubsub) Publish(channelId uint, msg *ClientMessage) error {
 }
 
 func (r *ChannelPubsub) ListenForMessages() {
-	pubsub := r.Rdb.Subscribe(r.Ctx, Prefix+"*")
+	pubsub := r.Rdb.PSubscribe(r.Ctx, Prefix+"*")
 	defer func(pubsub *redis.PubSub) {
 		err := pubsub.Close()
 		if err != nil {
-			// log
 			fmt.Println(err)
 			return
 		}
@@ -38,15 +38,17 @@ func (r *ChannelPubsub) ListenForMessages() {
 
 	ch := pubsub.Channel()
 	for msg := range ch {
-		err := r.handlePayload(msg.Payload)
-		// log
-		fmt.Println(err)
+		fmt.Println("redis received: ", msg.Payload)
+		err := r.handlePayload(msg)
+		if err != nil {
+			fmt.Println("handlePayload error:", err)
+		}
 	}
 }
 
 // handlePayload handles a new message from redis
 // broadcasts to all clients subscribed to the channel
-func (r *ChannelPubsub) handlePayload(payload string) error {
-	fmt.Println(payload)
+func (r *ChannelPubsub) handlePayload(msg *redis.Message) error {
+	r.Manager.BroadcastTopic(msg.Channel, []byte(msg.Payload))
 	return nil
 }
